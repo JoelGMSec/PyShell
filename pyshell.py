@@ -17,7 +17,7 @@ banner = """
 
 credits = '\n --------------- by @JoelGMSec & @3v4Si0N ---------------\n'
 
-if len(sys.argv) == 1:
+if len(sys.argv) == 1 or len(sys.argv) < 5:
     print (colored(banner, 'green'))
     print (colored(credits, 'yellow'))
     print (colored("Usage: ", "yellow"), end='')
