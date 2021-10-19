@@ -29,6 +29,8 @@ string xml=@"<?xml version=""1.0""?><root></root>";string xslt=@"<?xml version='
 </xsl:template>
 </xsl:stylesheet>";
 
+try {
+
 XmlDocument xmldoc=new XmlDocument();
 xmldoc.LoadXml(xml);
 XmlDocument xsldoc=new XmlDocument();
@@ -36,7 +38,7 @@ xsldoc.LoadXml(xslt);
 XsltSettings xslt_settings = new XsltSettings(false, true);
 xslt_settings.EnableScript = true;
 
-try {
+
     XslCompiledTransform xct=new XslCompiledTransform();
     xct.Load(xsldoc,xslt_settings,new XmlUrlResolver());
     xct.Transform(xmldoc,null,new MemoryStream());}
