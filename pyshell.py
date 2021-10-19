@@ -10,10 +10,10 @@ banner = """
  ▓██░ ██▓▒ ▒██ ██░░ ▓██▄   ▒██▀▀██░▒███   ▒██░    ▒██░    
  ▒██▄█▓▒ ▒ ░ ▐██▓░  ▒   ██▒░▓█ ░██ ▒▓█  ▄ ▒██░    ▒██░    
  ▒██▒ ░  ░ ░ ██▒▓░▒██████▒▒░▓█▒░██▓░▒████▒░██████▒░██████▒
- ▒▓▒░ ░  ░  ██▒▒▒ ▒ ▒▓▒ ▒ ░ ▒ ░░▒░▒░░ ▒░ ░░ ▒░▓  ░░ ▒░▓  ░
+ ▒█▒░ ░  ░  ██▒▒▒ ▒ ▒▓▒ ▒ ░ ▒ ░░▒░▒░░ ▒░ ░░ ▒░▓  ░░ ▒░▓  ░
  ░▒ ░     ▓██ ░▒░ ░ ░▒    ░ ▒ ░▒░ ░ ░ ░  ░░ ░ ▒  ░░ ░ ▒  ░
- ░░       ▒ ▒ ░░  ░  ░  ░   ░  ░░ ░         ░ ░     ░ ░   
-          ░             ░      ░      ░       ░       ░         """
+ ░░   ░   ▒ ▒ ░░  ░  ░  ░   ░  ░░ ░         ░ ░     ░ ░   
+ ░        ░             ░      ░      ░       ░          ░ """
 
 credits = '\n --------------- by @JoelGMSec & @3v4Si0N ---------------\n'
 
@@ -21,7 +21,8 @@ if len(sys.argv) == 1:
     print (colored(banner, 'green'))
     print (colored(credits, 'yellow'))
     print (colored("Usage: ", "yellow"), end='')
-    print (colored("pyshell.py https://domain.com/shell.php -p payload -ps/-cmd\n", "white"))
+    print (colored("pyshell.py https://domain.com/shell.php -p payload -ps/-cmd", "white"))
+    print (colored('       Send "exit" or press "ctrl+c" at any moment to quit program\n', "red"))
     sys.exit()
 
 def sendCommand(command, webshell):
@@ -41,14 +42,20 @@ if __name__ == "__main__":
         mode = sys.argv[4]
 
     while True:
-        command = input(colored("PyShell $> ", "green"))
-        if command == "exit":
+        try:
+            command = input(colored("PyShell $> ", "green"))
+            if command == "exit":
+                print (colored("Exiting..", "red"))
+                print ("")
+                break
+            else:
+                if mode != "-ps":
+                    result = sendCommand(command, webshell)
+                    print (colored(result, "yellow"))
+                else:
+                    result = sendCommand("powershell "+command, webshell)
+                    print (colored(result, "yellow"))                    
+        except:
+            print (colored("\nExiting..", "red"))
             print ("")
             break
-        else:
-            if mode != "-ps":
-                result = sendCommand(command, webshell)
-                print (colored(result, "yellow"))
-            else:
-                result = sendCommand("powershell "+command, webshell)
-                print (colored(result, "yellow"))
