@@ -32,8 +32,8 @@ if __name__ == "__main__":
 
 print (colored(banner, 'green'))
 parser = argparse.ArgumentParser()
-parser.add_argument('URL', help='Webshell URL', type=str)
-parser.add_argument('METHOD', help='HTTP Method to execute command (GET or POST)', type=str)
+parser.add_argument('url', help='Webshell URL', type=str)
+parser.add_argument('method', help='HTTP Method to execute command (GET or POST)', type=str)
 parser.add_argument('--ps', default=False, action="store_true", help='PowerShell command execution (Only on Windows hosts)')
 parser.add_argument('-p', '--param', default="code", help='Parameter to use with custom WebShell', type=str)
 args = parser.parse_args()
