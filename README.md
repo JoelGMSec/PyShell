@@ -1,4 +1,4 @@
 # PyShell
 Multiplatform Python WebShell
 
-<img width=600 src="https://raw.githubusercontent.com/JoelGMSec/PyShell/main/screenshot.png"></p>
+<img width=600 src="https://github.com/JoelGMSec/PyShell/blob/main/screenshot.png"></p>
