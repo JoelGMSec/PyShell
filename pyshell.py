@@ -90,9 +90,9 @@ try:
                          else:
                             path = command.split()[1]   
                    else:
-                      if "ls" or "dir" in command.split()[0]:
-                         result = send_command("ls " + path, WEBSHELL, HTTP_METHOD, PARAM) 
-                         print (colored(result, "yellow"))
+                      if "ls" in command.split()[0] or "dir" in command.split()[0]:
+                         content = send_command("ls " + path, WEBSHELL, HTTP_METHOD, PARAM)
+                         print (colored(content, "yellow"))
                       else:
                          if args.ps:
                             result = send_command("powershell " + command, WEBSHELL, HTTP_METHOD, PARAM)
