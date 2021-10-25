@@ -63,6 +63,9 @@ try:
              print (colored("Exiting..\n", "red"))
              break
           else:
+             if len(command) == 0:
+                print("\n")
+                continue
              if "upload" in command.split()[0]: 
                 localfile = command.split()[1]
                 remotefile = command.split()[2]
