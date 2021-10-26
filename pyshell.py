@@ -66,6 +66,9 @@ try:
              if len(command) == 0:
                 print("\n")
                 continue
+             if "clear" in command.split()[0] or "cls" in command.split()[0]:
+                os.system('clear')
+                continue
              if "upload" in command.split()[0]: 
                 localfile = command.split()[1]
                 remotefile = command.split()[2]
