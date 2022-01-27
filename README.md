@@ -63,7 +63,9 @@ This project is licensed under the GNU 3.0 license - see the LICENSE file for mo
 
 
 # Credits and Acknowledgments
-This tool has been created and designed from scratch by Joel Gámez Molina (@JoelGMSec) and Héctor de Armas Padrón (@3v4si0n)
+This tool has been created and designed from scratch by Joel Gámez Molina (@JoelGMSec) and Héctor de Armas Padrón (@3v4si0n).
+
+Special thanks to [@Davidc96](https://github.com/Davidc96) for dynamic path function.
 
 
 # Contact
