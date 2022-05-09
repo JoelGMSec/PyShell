@@ -55,13 +55,16 @@ try:
    if args.pipe:
       PIPE = "|"
    whoami = send_command(PIPE + "whoami", WEBSHELL, HTTP_METHOD, PARAM)
+   if not "<pre>" in whoami:
+      print (colored("[!] Command output not found! Exiting..\n", "red"))
+      sys.exit()                      
    if "<pre>" in whoami:
-         whoami = str(whoami).split("<pre>", 1)[1] ; whoami = str(whoami).split("</pre>", 1)[0]
+      whoami = str(whoami).split("<pre>", 1)[1] ; whoami = str(whoami).split("</pre>", 1)[0]
    if args.sudo:
       whoami = "root"
    hostname = send_command(PIPE + "hostname", WEBSHELL, HTTP_METHOD, PARAM)
    if "<pre>" in hostname:
-         hostname = str(hostname).split("<pre>", 1)[1] ; hostname = str(hostname).split("</pre>", 1)[0]
+      hostname = str(hostname).split("<pre>", 1)[1] ; hostname = str(hostname).split("</pre>", 1)[0]
    cwd = "" ; slash = "\\"
    if not slash in whoami:
       path = send_command(PIPE + "pwd", WEBSHELL, HTTP_METHOD, PARAM)
