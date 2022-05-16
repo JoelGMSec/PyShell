@@ -46,6 +46,7 @@ parser.add_argument("-a", "--auth", help="Authorization header to use on each re
 parser.add_argument("-c", "--cookies", help="Cookie header to use on each request", type=str)
 parser.add_argument("-p", "--param", default="code", help="Parameter to use with custom WebShell", type=str)
 parser.add_argument("-pi", "--pipe", action="store_true", help="Pipe all commands after parameter")
+parser.add_argument("-ifs", "--ifs", action="store_true", help="Replace all white spaces with Internal Field Separator")
 parser.add_argument("-su", "--sudo", action="store_true", help="Sudo command execution (Only on Linux hosts)")
 parser.add_argument("-ps", "--PowerShell", action="store_true", help="PowerShell command execution (Only on Windows hosts)")
 args = parser.parse_args()
@@ -100,6 +101,8 @@ try:
             print (colored("[!] Exiting..\n", "red"))
             break
          else:
+            if args.ifs:
+               command = command.replace(" ","${IFS}")
             if len(command) == 0:
                print("\n")
                continue
