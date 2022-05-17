@@ -167,6 +167,7 @@ try:
                      f = open(localfile, "wb") ; f.write(download) ; f.close()
                else:
                   if "pwd" in command.split()[0]:
+                     pwd = str(pwd) + "\n"
                      print (colored(path, "yellow"))
                   else:
                      if "cd" in command.split()[0]:
