@@ -35,7 +35,7 @@ git clone https://github.com/JoelGMSec/PyShell
 
   -------------- by @JoelGMSec & @3v4Si0N ---------------
 
-usage: pyshell.py [-h] [-a AUTH] [-c COOKIES] [-p PARAM] [-pi] [-su] [-ps] url method
+usage: pyshell.py [-h] [-a AUTH] [-c COOKIES] [-p PARAM] [-pi] [-ifs] [-su] [-ps] url method
 
 positional arguments:
   url                   Webshell URL
@@ -49,6 +49,7 @@ optional arguments:
   -p PARAM, --param PARAM
                         Parameter to use with custom WebShell
   -pi, --pipe           Pipe all commands after parameter
+  -ifs, --ifs           Replace all white spaces with Internal Field Separator
   -su, --sudo           Sudo command execution (Only on Linux hosts)
   -ps, --PowerShell     PowerShell command execution (Only on Windows hosts)
 ```
