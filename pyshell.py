@@ -88,15 +88,15 @@ try:
 
    while True:
       try:
-         print (colored(" [PyShell] ", "grey", "on_green"), end = "") ; print (colored(" ", "green", "on_blue"), end = "")
-         print (colored(str(whoami).rstrip()+"@"+str(hostname).rstrip()+" ", "grey", "on_blue"), end = "")
+         cinput = (colored(" [PyShell] ", "grey", "on_green")) ; cinput += (colored(" ", "green", "on_blue"))
+         cinput += (colored(str(whoami).rstrip()+"@"+str(hostname).rstrip()+" ", "grey", "on_blue"))
          if len(str(path).rstrip()) > 30:
             shortpath = str(path).rstrip().split(slash)[-3:] ; shortpath = ".." + slash + slash.join(map(str, shortpath))
-            print (colored(" ", "blue", "on_yellow"), end = "") ; print (colored(shortpath.rstrip()+" ", "grey", "on_yellow"), end = "")
+            cinput += (colored(" ", "blue", "on_yellow")) ; cinput += (colored(shortpath.rstrip()+" ", "grey", "on_yellow"))
          else:
-            print (colored(" ", "blue", "on_yellow"), end = "") ; print (colored(path.rstrip()+" ", "grey", "on_yellow"), end = "")
-         print (colored(" ", "yellow"), end = "")
-         command = input()
+            cinput += (colored(" ", "blue", "on_yellow")) ; cinput += (colored(path.rstrip()+" ", "grey", "on_yellow"))
+         cinput += (colored(" ", "yellow"))
+         command = input(cinput + "\001\033[0m\002")
          if command == "exit":
             print (colored("[!] Exiting..\n", "red"))
             break
