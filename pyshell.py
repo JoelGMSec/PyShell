@@ -103,7 +103,7 @@ try:
             break
          else:
             if args.ifs:
-               command = command.replace(" ","${IFS}")
+               command = command.replace("space","${IFS}")
                space = "${IFS}"
             if len(command) == 0:
                print("\n")
