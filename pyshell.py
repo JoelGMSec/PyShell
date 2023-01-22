@@ -169,6 +169,7 @@ try:
                         cwd = os.getcwd()
                         if localfile == ".":
                            localfile = command.split()[1]
+                           localfile = localfile.split(slash)[-1]
                         print (colored("[+] Downloading file " + remotefile + " on " + cwd + localslash + localfile + "..\n", "red"))
                      else:
                         print (colored("[+] Downloading file " + remotefile + " on " + localfile + "..\n", "red"))
