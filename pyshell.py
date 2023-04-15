@@ -5,10 +5,12 @@ import readline
 import argparse
 import base64
 import urllib3
-from termcolor import colored
+import neotermcolor
+from neotermcolor import colored
 
 urllib3.disable_warnings()
 TAG_RE = re.compile(r'<[^>]+>')
+neotermcolor.readline_always_safe = True
 
 def remove_html(text):
    return TAG_RE.sub('', text).strip()
@@ -94,7 +96,7 @@ try:
       try:
          cinput = (colored(" [PyShell] ", "grey", "on_green")) ; cinput += (colored(" ", "green", "on_blue"))
          cinput += (colored(str(whoami).rstrip()+"@"+str(hostname).rstrip() + " ", "grey", "on_blue"))
-         if len(str(path).rstrip()) > 30:
+         if len(str(path).rstrip()) > 24:
             shortpath = str(path).rstrip().split(slash)[-3:] ; shortpath = ".." + slash + slash.join(map(str, shortpath))
             cinput += (colored(" ", "blue", "on_yellow")) ; cinput += (colored(shortpath.rstrip() + " ", "grey", "on_yellow"))
          else:
