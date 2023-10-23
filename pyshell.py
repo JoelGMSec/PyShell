@@ -99,7 +99,7 @@ try:
          path = remove_html(path)
       system = "linux" ; slash = "/"
    else:
-      path = send_command(PIPE + "(pwd).path", WEBSHELL, HTTP_METHOD, PARAM)
+      path = send_command(PIPE + "cmd /c echo %cd%", WEBSHELL, HTTP_METHOD, PARAM)
       if args.nopre:
          path = "<pre>" + path + "</pre>"
       if "<pre>" in path:
