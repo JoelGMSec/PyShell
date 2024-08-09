@@ -243,7 +243,7 @@ try:
                            else:
                               relative_path = command_array[0]
                            if not slash in relative_path:
-                              command = cmd + space + param + path.rstrip() + slash + relative_path
+                              command = cmd + space + param + '"' + path.rstrip() + slash + relative_path + '"'
                            content = send_command(PIPE + command, WEBSHELL, HTTP_METHOD, PARAM)
                            if args.nopre:
                               content = "<pre>" + content + "</pre>"
