@@ -31,7 +31,7 @@ def send_command(command, webshell, method, param="code"):
    return response.content.decode(errors="ignore")
 
 if __name__ == "__main__":
- banner = """
+ banner = r"""
   ██████ ▓██   ░██  ██████  ██░ ██ ▓█████  ██▓     ██▓    
  ▓██░  ██▒██░   ██▒██    ▒ ▓██  ██▒▓██    ▓██▒    ▓██▒    
  ▓██░  ██▒ ██  ██░░ ▓███   ▒██████░▒████  ▒██░    ▒██░    
