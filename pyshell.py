@@ -517,6 +517,5 @@ if __name__ == "__main__":
             except:
                 pass
 
-    except Exception as e:
-        print(e)
+    except:
         print (colored("\n[!] Error getting connection!\n", "red"))
