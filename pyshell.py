@@ -19,6 +19,7 @@ neotermcolor.readline_always_safe = True
 
 error_patterns = [
     "permission denied",
+    "not recognized",
     "access denied",
     "no tty present",
     "must be run",
